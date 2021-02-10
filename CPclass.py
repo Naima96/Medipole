@@ -12,8 +12,6 @@ from datetime import datetime
 from scipy import signal,fft
 from scipy.signal import find_peaks
 import sys
-import scipy.io as sio
-import nolds as nld
 import os
 class phone(object):
     '''
@@ -1075,61 +1073,6 @@ class phone(object):
             fig.savefig(y, format='png')
         return()
         
-    # def writeresults(self,path):
-    #     """
-    #     """
-    #     mydict=self.cycle_temp
-
-    #     with open(path,'wb') as f:
-    #         pickle.dump(mydict,f)
-            
-    def calculate_lyapunov(self,data,dim,tao,stride_duration):
-        """
-        """
-#        acc_data=np.hstack(self.acc_strides)
-#        gyro_data=np.hstack(self.gyro_strides)
-        #---Find lag---
-#        lag=delay.dmi(y, maxtau=1000, bins=64)
-#        plt.plot(lag)
-        #---Find embedding dimension---
-#        f=dimension.fnn(y, dim=[1,2,3,4,5,6,7,8,9,10], tau=15, R=15.0, A=2.0, metric='euclidean', window=10,maxnum=None, parallel=True)
-#        v=(f[2,:]/f[2,0])*100
-        #first v<0.1 is the proper embedding dimension
-        #emb_dim from articles taken to be 5
-        #lag taken 5 from average mutual information curve
-        #minstep average duration of stride
-        #trajectory_len until when the distance is calculated
-        _,debug=nld.lyap_r(data, emb_dim=dim,lag=tao, min_tsep=stride_duration, 
-                              tau=0.01, trajectory_len=stride_duration*10, fit='poly', debug_plot=True,
-                              debug_data=True, plot_file="lyap", fit_offset=0)
-        #half_strideduration=50
-        plt.figure()
-        d=debug[1]
-        x=debug[0]/stride_duration
-        plt.plot(x,d)
-        
-        j=stride_duration//2
-        #plt.plot(debug[0],debug[1])
-        z=np.polyfit(debug[0][0:j],debug[1][0:j],1)
-        p = np.poly1d(z)
-        plt.plot(debug[0][0:j]/stride_duration,p(debug[0][0:j]))
-        lle=z[0]*100
-        return(lle)
-    
-    def calculate_DFA(self,data):
-        """
-        """
-#        data=stride_cp_cont
-#        data=stride_r
-        N=len(data)
-        f=2**(1/8)
-        if N>500:
-            nvals=nld.logarithmic_n(16, N//9,f)
-        else:
-            nvals=nld.logarithmic_n(4, N//4,f)
-        xx,yy=nld.dfa(data, nvals=nvals, overlap=False, order=1, fit_trend="poly",fit_exp="RANSAC", debug_plot=True, debug_data=True, plot_file=None)
-        
-        return(xx,yy) 
         
     def read_gaitupexcel(self,path,period=30,remove_init=True,phase=True):
         sheet = pd.read_excel(path)

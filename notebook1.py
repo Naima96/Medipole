@@ -382,8 +382,8 @@ class MyApplication:
         
         self.exported_results_res['stride duration']=pd.to_numeric(self.exported_results_res['stride duration'], downcast='float')
         
-        self.lbl_SDstride.configure(text ='%f seconds'%(np.round(np.std(self.exported_results_res['stride duration'].values),decimals=5)*1000))
-        self.lbl_CVstride.configure(text ='%f %%'%(np.round(np.std(self.exported_results_res['stride duration'].values)/np.mean(self.exported_results_res['stride duration'].values),decimals=5)*100))
+        self.lbl_SDstride.configure(text ='%.2f milliseconds'%(np.round(np.std(self.exported_results_res['stride duration'].values),decimals=5)*1000))
+        self.lbl_CVstride.configure(text ='%.2f %%'%(np.round(np.std(self.exported_results_res['stride duration'].values)/np.mean(self.exported_results_res['stride duration'].values),decimals=5)*100))
         self.lbl_Nstride.configure(text ='%d'%(len(self.exported_results_res['stride duration'].values)))
         self.lbl_Nphase.configure(text ='%d'%(len(self.exported_results)))
         
