@@ -1,0 +1,1100 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface version="1.0">
+  <object class="tk.Toplevel" id="mainwindow">
+    <property name="container">false</property>
+    <property name="geometry">1440x900</property>
+    <property name="height">200</property>
+    <property name="takefocus">false</property>
+    <property name="width">200</property>
+    <child>
+      <object class="ttk.Notebook" id="notebook_1">
+        <property name="cursor">arrow</property>
+        <property name="height">200</property>
+        <property name="padding">10</property>
+        <property name="width">200</property>
+        <layout manager="pack">
+          <property name="expand">true</property>
+          <property name="fill">both</property>
+          <property name="propagate">True</property>
+          <property name="side">top</property>
+        </layout>
+        <child>
+          <object class="ttk.Notebook.Tab" id="tab_1">
+            <property name="compound">bottom</property>
+            <property name="padding">10</property>
+            <property name="state">normal</property>
+            <property name="text" translatable="yes">subject</property>
+            <child>
+              <object class="ttk.Frame" id="frame_5">
+                <property name="height">200</property>
+                <property name="text" translatable="yes">Turn1: (start,stop)
+Turn2: (start,stop)
+Turn3: (start,stop)
+Turn4: (start,stop)
+Turn5: (start,stop)
+</property>
+                <property name="width">200</property>
+                <layout manager="pack">
+                  <property name="propagate">True</property>
+                  <property name="side">top</property>
+                </layout>
+                <child>
+                  <object class="ttk.Labelframe" id="choose subject">
+                    <property name="height">0</property>
+                    <property name="relief">raised</property>
+                    <property name="text" translatable="yes">choose subject</property>
+                    <property name="width">0</property>
+                    <layout manager="grid">
+                      <property name="padx">10</property>
+                      <property name="propagate">True</property>
+                      <property name="sticky">w</property>
+                      <property type="row" id="0" name="minsize">0</property>
+                      <property type="row" id="0" name="pad">0</property>
+                    </layout>
+                    <child>
+                      <object class="pygubu.builder.widgets.pathchooserinput" id="filepath">
+                        <property name="type">directory</property>
+                        <bind sequence="&lt;&lt;PathChooserPathChanged&gt;&gt;" handler="on_path_changed" add="" />
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                          <property name="sticky">w</property>
+                          <property type="col" id="1" name="minsize">200</property>
+                          <property type="row" id="0" name="minsize">50</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_4">
+                        <property name="text" translatable="yes">Choose directory</property>
+                        <layout manager="grid">
+                          <property name="ipadx">10</property>
+                          <property name="propagate">True</property>
+                          <property name="row">0</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_5">
+                        <property name="font">TkMenuFont</property>
+                        <property name="text" translatable="yes">Weight</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="ipady">10</property>
+                          <property name="propagate">True</property>
+                          <property name="row">2</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Entry" id="entry_2">
+                        <property name="text" translatable="yes">0</property>
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                          <property name="row">2</property>
+                          <property name="sticky">w</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_7_8">
+                        <property name="text" translatable="yes">Selected files:</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">1</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="lbl_files">
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                          <property name="row">1</property>
+                          <property name="sticky">w</property>
+                        </layout>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe_3">
+                    <property name="height">0</property>
+                    <property name="relief">flat</property>
+                    <property name="text" translatable="yes">Sensor information</property>
+                    <property name="width">0</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="padx">10</property>
+                      <property name="pady">0</property>
+                      <property name="propagate">True</property>
+                      <property name="row">1</property>
+                      <property name="sticky">w</property>
+                      <property type="row" id="0" name="minsize">0</property>
+                      <property type="row" id="0" name="pad">0</property>
+                      <property type="row" id="1" name="minsize">20</property>
+                      <property type="row" id="1" name="pad">10</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Label" id="label_7">
+                        <property name="text" translatable="yes">Position of sensor:</property>
+                        <layout manager="grid">
+                          <property name="ipadx">10</property>
+                          <property name="ipady">0</property>
+                          <property name="propagate">True</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Radiobutton" id="radiobutton_1">
+                        <property name="state">disabled</property>
+                        <property name="text" translatable="yes">Waist</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="padx">10</property>
+                          <property name="pady">10</property>
+                          <property name="propagate">True</property>
+                          <property name="row">1</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Radiobutton" id="radiobutton_2">
+                        <property name="state">disabled</property>
+                        <property name="text" translatable="yes">Pocket</property>
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="ipadx">10</property>
+                          <property name="padx">10</property>
+                          <property name="pady">10</property>
+                          <property name="propagate">True</property>
+                          <property name="row">1</property>
+                          <property name="sticky">w</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Radiobutton" id="radiobutton_3">
+                        <property name="state">disabled</property>
+                        <property name="text" translatable="yes">Hand</property>
+                        <layout manager="grid">
+                          <property name="column">2</property>
+                          <property name="padx">10</property>
+                          <property name="propagate">True</property>
+                          <property name="row">1</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_8">
+                        <property name="text" translatable="yes">Sampling frequency</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="padx">10</property>
+                          <property name="propagate">True</property>
+                          <property name="row">2</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Entry" id="entry_3">
+                        <property name="state">disabled</property>
+                        <property name="text" translatable="yes">100</property>
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                          <property name="row">2</property>
+                          <property name="sticky">w</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_2">
+                        <property name="text" translatable="yes">Acceleration unit</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">3</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Combobox" id="combobox_1">
+                        <property name="exportselection">false</property>
+                        <property name="state">disabled</property>
+                        <bind sequence="&lt;&lt;ComboboxSelected&gt;&gt;" handler="on_accunit_selected" add="" />
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                          <property name="row">3</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_3">
+                        <property name="text" translatable="yes">Gyroscope unit</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">4</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Combobox" id="combobox_2">
+                        <property name="state">disabled</property>
+                        <bind sequence="&lt;&lt;ComboboxSelected&gt;&gt;" handler="on_gyrounit_selected" add="" />
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                          <property name="row">4</property>
+                        </layout>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Frame" id="frame_6">
+                    <property name="height">600</property>
+                    <property name="relief">raised</property>
+                    <property name="width">700</property>
+                    <layout manager="grid">
+                      <property name="column">2</property>
+                      <property name="columnspan">3</property>
+                      <property name="padx">10</property>
+                      <property name="pady">10</property>
+                      <property name="propagate">True</property>
+                      <property name="row">0</property>
+                      <property name="rowspan">5</property>
+                      <property type="row" id="0" name="minsize">0</property>
+                      <property type="row" id="0" name="pad">0</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Frame" id="frame_7">
+                        <property name="height">500</property>
+                        <property name="width">500</property>
+                        <layout manager="grid">
+                          <property name="padx">10</property>
+                          <property name="pady">10</property>
+                          <property name="propagate">True</property>
+                          <property name="row">1</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Label" id="label_10">
+                            <property name="borderwidth">2</property>
+                            <property name="style">Times</property>
+                            <property name="text" translatable="yes">Choose what type of signal to plot:</property>
+                            <layout manager="grid">
+                              <property name="padx">10</property>
+                              <property name="propagate">True</property>
+                              <property name="sticky">w</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="btn_plot">
+                            <property name="state">disabled</property>
+                            <property name="text" translatable="yes">Plot</property>
+                            <property name="width">5</property>
+                            <bind sequence="&lt;Button-1&gt;" handler="plot_graph" add="" />
+                            <layout manager="grid">
+                              <property name="column">2</property>
+                              <property name="padx">5</property>
+                              <property name="propagate">True</property>
+                              <property name="row">0</property>
+                              <property name="sticky">e</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Combobox" id="combobox_4">
+                            <property name="width">25</property>
+                            <bind sequence="&lt;&lt;ComboboxSelected&gt;&gt;" handler="on_plot_selected" add="" />
+                            <layout manager="grid">
+                              <property name="column">1</property>
+                              <property name="propagate">True</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="button_3">
+                            <property name="state">disabled</property>
+                            <property name="text" translatable="yes">Clear</property>
+                            <property name="width">5</property>
+                            <bind sequence="&lt;Button-1&gt;" handler="clear_graph" add="" />
+                            <layout manager="grid">
+                              <property name="column">4</property>
+                              <property name="padx">5</property>
+                              <property name="propagate">True</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="Undo">
+                            <property name="state">disabled</property>
+                            <property name="text" translatable="yes">Undo</property>
+                            <property name="width">5</property>
+                            <bind sequence="&lt;Button-1&gt;" handler="undo_turn" add="" />
+                            <layout manager="grid">
+                              <property name="column">3</property>
+                              <property name="padx">5</property>
+                              <property name="propagate">True</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Frame" id="fcontainer">
+                        <property name="height">500</property>
+                        <property name="relief">ridge</property>
+                        <property name="width">600</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="columnspan">4</property>
+                          <property name="propagate">True</property>
+                          <property name="row">2</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_1_2">
+                        <property name="text" translatable="yes">Manually detecting turns</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">0</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Frame" id="frame_1">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="pady">10</property>
+                          <property name="propagate">True</property>
+                          <property name="row">3</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Button" id="btn_detect_turn">
+                            <property name="state">disabled</property>
+                            <property name="text" translatable="yes">Detect turns</property>
+                            <bind sequence="&lt;Button-1&gt;" handler="Detect_turns" add="" />
+                            <layout manager="pack">
+                              <property name="propagate">True</property>
+                              <property name="side">right</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="btn_detect_start_stop">
+                            <property name="state">disabled</property>
+                            <property name="text" translatable="yes">Detect start/stop walking</property>
+                            <bind sequence="&lt;Button-1&gt;" handler="Detect_startandend" add="" />
+                            <layout manager="pack">
+                              <property name="propagate">True</property>
+                              <property name="side">left</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Button" id="btn_detect_step">
+                            <property name="state">disabled</property>
+                            <property name="text" translatable="yes">Detect steps</property>
+                            <bind sequence="&lt;Button-1&gt;" handler="Detect_steps" add="" />
+                            <layout manager="pack">
+                              <property name="anchor">e</property>
+                              <property name="propagate">True</property>
+                              <property name="side">right</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe_2">
+                    <property name="height">0</property>
+                    <property name="text" translatable="yes">Preprocessing</property>
+                    <property name="width">0</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="padx">10</property>
+                      <property name="propagate">True</property>
+                      <property name="row">2</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Entry" id="ent_cf">
+                        <property name="justify">left</property>
+                        <property name="state">normal</property>
+                        <property name="text" translatable="yes">10</property>
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_1">
+                        <property name="text" translatable="yes">Cut_off frequency</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">0</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_4_5">
+                        <property name="text" translatable="yes">Remove gait initiation (s)</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">1</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Entry" id="entry_2_3">
+                        <property name="cursor">arrow</property>
+                        <property name="font">TkDefaultFont</property>
+                        <property name="state">disabled</property>
+                        <property name="takefocus">true</property>
+                        <property name="text" translatable="yes">0</property>
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                          <property name="row">1</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_6">
+                        <property name="text" translatable="yes">Remove gait termination (s)</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">2</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Entry" id="entry_4_5">
+                        <property name="font">TkDefaultFont</property>
+                        <property name="justify">left</property>
+                        <property name="state">disabled</property>
+                        <property name="text" translatable="yes">0</property>
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                          <property name="row">2</property>
+                        </layout>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe_3_4">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Calculations</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="padx">10</property>
+                      <property name="propagate">True</property>
+                      <property name="row">3</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Button" id="btn_intr_filt">
+                        <property name="text" translatable="yes">Interpolate and Filter</property>
+                        <bind sequence="&lt;Button-1&gt;" handler="Interpolate_and_filter" add="" />
+                        <layout manager="pack">
+                          <property name="propagate">True</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Button" id="btn_cal_norm">
+                        <property name="state">disabled</property>
+                        <property name="text" translatable="yes">Calculate Norm of each signal</property>
+                        <bind sequence="&lt;Button-1&gt;" handler="calculate_norm" add="" />
+                        <layout manager="pack">
+                          <property name="propagate">True</property>
+                          <property name="side">top</property>
+                        </layout>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe_5">
+                    <property name="height">0</property>
+                    <property name="text" translatable="yes">Walking periods:</property>
+                    <property name="width">0</property>
+                    <layout manager="grid">
+                      <property name="column">1</property>
+                      <property name="padx">20</property>
+                      <property name="propagate">True</property>
+                      <property name="row">0</property>
+                      <property name="rowspan">10</property>
+                      <property name="sticky">n</property>
+                      <property type="row" id="0" name="minsize">0</property>
+                      <property type="row" id="0" name="pad">0</property>
+                      <property type="row" id="1" name="minsize">20</property>
+                      <property type="row" id="1" name="pad">10</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Label" id="label_14">
+                        <property name="text" translatable="yes">Walking periods (samples):</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">2</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="pygubu.builder.widgets.scrollbarhelper" id="scrollbarhelper_1">
+                        <property name="scrolltype">both</property>
+                        <property name="usemousewheel">false</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">3</property>
+                        </layout>
+                        <child>
+                          <object class="pygubu.builder.widgets.editabletreeview" id="myetv">
+                            <property name="show">headings</property>
+                            <bind sequence="&lt;&lt;TreeviewCellEdited&gt;&gt;" handler="on_cell_changed" add="" />
+                            <bind sequence="&lt;&lt;TreeviewInplaceEdit&gt;&gt;" handler="on_row_edit" add="" />
+                            <bind sequence="&lt;&lt;TreeviewSelect&gt;&gt;" handler="on_row_selected" add="True" />
+                            <layout manager="pack">
+                              <property name="propagate">True</property>
+                              <property name="side">top</property>
+                            </layout>
+                            <child>
+                              <object class="ttk.Treeview.Column" id="phase">
+                                <property name="column_anchor">w</property>
+                                <property name="heading_anchor">w</property>
+                                <property name="minwidth">20</property>
+                                <property name="stretch">true</property>
+                                <property name="text" translatable="yes">Phase</property>
+                                <property name="tree_column">false</property>
+                                <property name="visible">true</property>
+                                <property name="width">100</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Treeview.Column" id="Start">
+                                <property name="column_anchor">w</property>
+                                <property name="heading_anchor">w</property>
+                                <property name="minwidth">20</property>
+                                <property name="stretch">true</property>
+                                <property name="text" translatable="yes">Start</property>
+                                <property name="tree_column">false</property>
+                                <property name="visible">true</property>
+                                <property name="width">100</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Treeview.Column" id="Stop">
+                                <property name="column_anchor">w</property>
+                                <property name="heading_anchor">w</property>
+                                <property name="minwidth">20</property>
+                                <property name="stretch">true</property>
+                                <property name="text" translatable="yes">Stop</property>
+                                <property name="tree_column">false</property>
+                                <property name="visible">true</property>
+                                <property name="width">100</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Treeview.Column" id="Turning">
+                                <property name="column_anchor">w</property>
+                                <property name="heading_anchor">w</property>
+                                <property name="minwidth">20</property>
+                                <property name="stretch">true</property>
+                                <property name="text" translatable="yes">Steps Turning</property>
+                                <property name="tree_column">false</property>
+                                <property name="visible">true</property>
+                                <property name="width">100</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Frame" id="frame_3_4">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="padx">10</property>
+                          <property name="pady">10</property>
+                          <property name="propagate">True</property>
+                          <property name="row">0</property>
+                        </layout>
+                        <child>
+                          <object class="ttk.Label" id="label_11">
+                            <property name="compound">top</property>
+                            <property name="text" translatable="yes">Start walking (s):</property>
+                            <layout manager="grid">
+                              <property name="propagate">True</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Entry" id="str_walk">
+                            <property name="exportselection">true</property>
+                            <property name="text" translatable="yes">30</property>
+                            <property name="textvariable">string:str_walk</property>
+                            <layout manager="grid">
+                              <property name="column">1</property>
+                              <property name="padx">10</property>
+                              <property name="pady">10</property>
+                              <property name="propagate">True</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Label" id="label_12">
+                            <property name="text" translatable="yes">Stops walking(s):</property>
+                            <layout manager="grid">
+                              <property name="propagate">True</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Entry" id="stp_walk">
+                            <property name="text" translatable="yes">270</property>
+                            <property name="textvariable">string:stp_walk</property>
+                            <property name="validate">none</property>
+                            <layout manager="grid">
+                              <property name="column">1</property>
+                              <property name="propagate">True</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Label" id="label_18">
+                            <property name="text" translatable="yes">Default turning steps:</property>
+                            <layout manager="grid">
+                              <property name="column">0</property>
+                              <property name="pady">10</property>
+                              <property name="propagate">True</property>
+                              <property name="row">2</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="ttk.Entry" id="step_turn">
+                            <property name="text" translatable="yes">3</property>
+                            <layout manager="grid">
+                              <property name="column">1</property>
+                              <property name="propagate">True</property>
+                              <property name="row">2</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe_4">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Statistical filtering</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="padx">10</property>
+                      <property name="row">4</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Checkbutton" id="checkbutton_1">
+                        <property name="text" translatable="yes">Remove values more than "N" SD from mean</property>
+                        <layout manager="grid">
+                          <property name="padx">10</property>
+                          <property name="propagate">True</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_9">
+                        <property name="text" translatable="yes">N =</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="padx">10</property>
+                          <property name="propagate">True</property>
+                          <property name="row">1</property>
+                          <property name="sticky">w</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Entry" id="entry_4">
+                        <property name="exportselection">false</property>
+                        <property name="font">TkDefaultFont</property>
+                        <property name="text" translatable="yes">3</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">1</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Checkbutton" id="checkbutton_2">
+                        <property name="text" translatable="yes">Remove abnormal stride time </property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="padx">10</property>
+                          <property name="propagate">True</property>
+                          <property name="row">2</property>
+                          <property name="sticky">w</property>
+                        </layout>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Notebook.Tab" id="tab_2">
+            <property name="compound">bottom</property>
+            <property name="padding">10</property>
+            <property name="state">normal</property>
+            <property name="text" translatable="yes">Result</property>
+            <child>
+              <object class="ttk.Frame" id="frame_3">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="pack">
+                  <property name="propagate">True</property>
+                  <property name="side">top</property>
+                </layout>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe_1">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Results from pure peak detection</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="padx">20</property>
+                      <property name="pady">20</property>
+                      <property name="propagate">True</property>
+                      <property name="row">2</property>
+                    </layout>
+                    <child>
+                      <object class="pygubu.builder.widgets.scrollbarhelper" id="scrollbarhelper_2">
+                        <property name="scrolltype">both</property>
+                        <property name="usemousewheel">false</property>
+                        <layout manager="pack" />
+                        <child>
+                          <object class="pygubu.builder.widgets.editabletreeview" id="Result_treeview">
+                            <property name="show">headings</property>
+                            <layout manager="pack" />
+                            <child>
+                              <object class="ttk.Treeview.Column" id="column_2">
+                                <property name="column_anchor">w</property>
+                                <property name="heading_anchor">w</property>
+                                <property name="minwidth">20</property>
+                                <property name="stretch">true</property>
+                                <property name="text" translatable="yes">Phase</property>
+                                <property name="tree_column">false</property>
+                                <property name="visible">true</property>
+                                <property name="width">75</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Treeview.Column" id="column_5">
+                                <property name="column_anchor">w</property>
+                                <property name="heading_anchor">w</property>
+                                <property name="minwidth">20</property>
+                                <property name="stretch">true</property>
+                                <property name="text" translatable="yes">Stride number</property>
+                                <property name="tree_column">false</property>
+                                <property name="visible">true</property>
+                                <property name="width">150</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Treeview.Column" id="column_6">
+                                <property name="column_anchor">w</property>
+                                <property name="heading_anchor">w</property>
+                                <property name="minwidth">20</property>
+                                <property name="stretch">true</property>
+                                <property name="text" translatable="yes">Stride duration</property>
+                                <property name="tree_column">false</property>
+                                <property name="visible">true</property>
+                                <property name="width">150</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe_2_3">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Statistical Analysis</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="propagate">True</property>
+                      <property name="row">3</property>
+                    </layout>
+                    <child>
+                      <object class="pygubu.builder.widgets.scrollbarhelper" id="scrollbarhelper_3">
+                        <property name="scrolltype">both</property>
+                        <property name="usemousewheel">false</property>
+                        <layout manager="pack">
+                          <property name="propagate">True</property>
+                          <property name="side">top</property>
+                        </layout>
+                        <child>
+                          <object class="pygubu.builder.widgets.editabletreeview" id="stat_treeview">
+                            <property name="show">headings</property>
+                            <layout manager="pack">
+                              <property name="propagate">True</property>
+                              <property name="side">top</property>
+                            </layout>
+                            <child>
+                              <object class="ttk.Treeview.Column" id="column_1">
+                                <property name="column_anchor">w</property>
+                                <property name="heading_anchor">w</property>
+                                <property name="minwidth">20</property>
+                                <property name="stretch">true</property>
+                                <property name="text" translatable="yes">Phase</property>
+                                <property name="tree_column">false</property>
+                                <property name="visible">true</property>
+                                <property name="width">75</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Treeview.Column" id="column_2_3">
+                                <property name="column_anchor">w</property>
+                                <property name="heading_anchor">w</property>
+                                <property name="minwidth">20</property>
+                                <property name="stretch">true</property>
+                                <property name="text" translatable="yes">Mean Stride duration </property>
+                                <property name="tree_column">false</property>
+                                <property name="visible">true</property>
+                                <property name="width">150</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Treeview.Column" id="column_4">
+                                <property name="column_anchor">w</property>
+                                <property name="heading_anchor">w</property>
+                                <property name="minwidth">20</property>
+                                <property name="stretch">true</property>
+                                <property name="text" translatable="yes">Std Stride duration </property>
+                                <property name="tree_column">false</property>
+                                <property name="visible">true</property>
+                                <property name="width">150</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Treeview.Column" id="column_1_2">
+                                <property name="column_anchor">w</property>
+                                <property name="heading_anchor">w</property>
+                                <property name="minwidth">20</property>
+                                <property name="stretch">true</property>
+                                <property name="text" translatable="yes">Cov Stride duration</property>
+                                <property name="tree_column">false</property>
+                                <property name="visible">true</property>
+                                <property name="width">200</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Treeview.Column" id="column_1_2_3">
+                                <property name="column_anchor">w</property>
+                                <property name="heading_anchor">w</property>
+                                <property name="minwidth">20</property>
+                                <property name="stretch">true</property>
+                                <property name="text" translatable="yes">Number of strides</property>
+                                <property name="tree_column">false</property>
+                                <property name="visible">true</property>
+                                <property name="width">200</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe_3_4_5">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Export Options</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="propagate">True</property>
+                      <property name="row">4</property>
+                      <property name="sticky">e</property>
+                    </layout>
+                    <child>
+                      <object class="pygubu.builder.widgets.pathchooserinput" id="path_choose_Export">
+                        <property name="type">directory</property>
+                        <bind sequence="&lt;&lt;PathChooserPathChanged&gt;&gt;" handler="on_path_changed_export" add="" />
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Button" id="button_2">
+                        <property name="idtocommand">false</property>
+                        <property name="text" translatable="yes">Export</property>
+                        <bind sequence="&lt;Button-1&gt;" handler="Save_and_Export" add="" />
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                          <property name="sticky">e</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_1_2_3">
+                        <property name="text" translatable="yes">Where to Export:</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">0</property>
+                          <property name="sticky">e</property>
+                        </layout>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe_3_4_5_6">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Overall parameters</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">0</property>
+                      <property name="propagate">True</property>
+                      <property name="row">4</property>
+                      <property name="sticky">w</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Label" id="label_1_2_3_4">
+                        <property name="text" translatable="yes">Overall standard deviation of stride duration:</property>
+                        <layout manager="grid">
+                          <property name="padx">30</property>
+                          <property name="propagate">True</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_5_6">
+                        <property name="text" translatable="yes">Overall coefficient of variance:</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">1</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_7_8_9">
+                        <property name="text" translatable="yes">Total number of strides:</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">2</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="label_10_11">
+                        <property name="text" translatable="yes">Number of aller retour:</property>
+                        <layout manager="grid">
+                          <property name="column">0</property>
+                          <property name="propagate">True</property>
+                          <property name="row">3</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="SD_stride">
+                        <property name="background">#ffff80</property>
+                        <property name="font">{Agency FB} 16 {}</property>
+                        <property name="text" translatable="yes">0</property>
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                          <property name="row">0</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="CV_stride">
+                        <property name="background">#ffff80</property>
+                        <property name="font">{Agency FB} 16 {}</property>
+                        <property name="text" translatable="yes">0</property>
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                          <property name="row">1</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="N_stride">
+                        <property name="background">#ffff80</property>
+                        <property name="font">{Agency FB} 16 {}</property>
+                        <property name="text" translatable="yes">0</property>
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                          <property name="row">2</property>
+                        </layout>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="ttk.Label" id="N_phase">
+                        <property name="background">#ffff80</property>
+                        <property name="font">{Agency FB} 16 {}</property>
+                        <property name="text" translatable="yes">0</property>
+                        <layout manager="grid">
+                          <property name="column">1</property>
+                          <property name="propagate">True</property>
+                          <property name="row">3</property>
+                        </layout>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
