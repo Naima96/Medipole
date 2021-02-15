@@ -418,7 +418,7 @@ class MyApplication:
         
         
     def plot_stridetime(self):
-        self.figure2 = Figure(figsize=(7, 6), dpi=100)
+        self.figure2 = Figure(figsize=(6, 5), dpi=100)
         self.canvas2 = FigureCanvasTkAgg(self.figure2, master=self.fcontainer2)
         self.canvas2.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         self.toolbar = NavigationToolbar2Tk(self.canvas2, self.fcontainer2)

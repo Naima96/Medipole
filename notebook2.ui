@@ -681,7 +681,7 @@ Turn5: (start,stop)
                     <layout manager="place">
                       <property name="anchor">nw</property>
                       <property name="relx">0.33</property>
-                      <property name="rely">0.08</property>
+                      <property name="rely">0.03</property>
                       <property name="x">0</property>
                       <property name="y">0</property>
                     </layout>
@@ -725,14 +725,12 @@ Turn5: (start,stop)
                     <property name="height">200</property>
                     <property name="text" translatable="yes">Overall parameters</property>
                     <property name="width">200</property>
-                    <layout manager="grid">
-                      <property name="column">0</property>
-                      <property name="columnspan">2</property>
-                      <property name="padx">20</property>
-                      <property name="pady">10</property>
-                      <property name="propagate">True</property>
-                      <property name="row">2</property>
-                      <property name="sticky">w</property>
+                    <layout manager="place">
+                      <property name="anchor">nw</property>
+                      <property name="relx">0.33</property>
+                      <property name="rely">0.13</property>
+                      <property name="x">0</property>
+                      <property name="y">0</property>
                     </layout>
                     <child>
                       <object class="ttk.Label" id="label_1_2_3_4">
@@ -849,9 +847,9 @@ Turn5: (start,stop)
                 </layout>
                 <child>
                   <object class="ttk.Labelframe" id="labelframe_1_2_5">
-                    <property name="height">200</property>
+                    <property name="height">400</property>
                     <property name="text" translatable="yes">Plot stride time</property>
-                    <property name="width">200</property>
+                    <property name="width">400</property>
                     <layout manager="grid">
                       <property name="column">3</property>
                       <property name="columnspan">1</property>
@@ -864,8 +862,8 @@ Turn5: (start,stop)
                     </layout>
                     <child>
                       <object class="ttk.Frame" id="fcontainer2">
-                        <property name="height">200</property>
-                        <property name="width">200</property>
+                        <property name="height">400</property>
+                        <property name="width">400</property>
                         <layout manager="pack">
                           <property name="propagate">True</property>
                           <property name="side">top</property>
