@@ -50,20 +50,21 @@ class MyApplication:
 
         # Container for the matplotlib canvas and toolbar classes
         self.fcontainer = builder.get_object('fcontainer')
+        self.fcontainer2 = builder.get_object('fcontainer2')
          
         #set filepathchooser
         self.filepath = builder.get_object('filepath')
         self.filepath_export=builder.get_object('path_choose_Export')
         
         #set combo_box
-        self.accunit_combo = builder.get_object('combobox_1')
-        options = ['Select an option', 'm/s^2', 'g']
-        self.accunit_combo.config(values=options)
+        # self.accunit_combo = builder.get_object('combobox_1')
+        # options = ['Select an option', 'm/s^2', 'g']
+        # self.accunit_combo.config(values=options)
         
         
-        self.gyrounit_combo = builder.get_object('combobox_2')
-        options = ['Select an option', 'rad/s', 'deg/s']
-        self.gyrounit_combo.config(values=options)
+        # self.gyrounit_combo = builder.get_object('combobox_2')
+        # options = ['Select an option', 'rad/s', 'deg/s']
+        # self.gyrounit_combo.config(values=options)
         
         self.plot_combo = builder.get_object('combobox_4')
         options = ['Select an option', 'Acceleration Norm', 'Gyroscope norm' ]
@@ -295,8 +296,8 @@ class MyApplication:
         
     def Save_and_Export(self,event=None):
         
-        self.exported_results.to_csv(self.export_path+"_exported_results.csv",index=False,header=True)
-        self.exported_results_res.to_csv(self.export_path+"_exported_stride_results.csv",index=False,header=True)
+        self.exported_results.to_csv(self.export_path+"\\_exported_results.csv",index=False,header=True)
+        self.exported_results_res.to_csv(self.export_path+"\\_exported_stride_results.csv",index=False,header=True)
         print("saved")
         
         
@@ -387,7 +388,7 @@ class MyApplication:
         self.lbl_Nstride.configure(text ='%d'%(len(self.exported_results_res['stride duration'].values)))
         self.lbl_Nphase.configure(text ='%d'%(len(self.exported_results)))
         
-        
+        self.plot_stridetime()
             
             
         # print(exported_results)
@@ -416,6 +417,24 @@ class MyApplication:
         print('Rows selected', event.widget.selection())
         
         
+    def plot_stridetime(self):
+        self.figure2 = Figure(figsize=(5, 4), dpi=100)
+        self.canvas2 = FigureCanvasTkAgg(self.figure2, master=self.fcontainer2)
+        self.canvas2.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        self.toolbar = NavigationToolbar2Tk(self.canvas2, self.fcontainer2)
+        self.toolbar.update()
+        self.canvas2._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        self.b = self.figure2.add_subplot(111)
+            
+        self.b.plot(self.exported_results_res['stride duration'],zorder=1)
+        self.b.set_ylabel('Stride duration (s)')
+        self.b.set_xlabel('Stride number')
+        self.b.axhline(y=np.mean(self.exported_results_res['stride duration']),label='Average Stride Time',color='r')
+        self.b.axhline(y=np.mean(self.exported_results_res['stride duration'])-np.std(self.exported_results_res['stride duration']),linestyle='--',color='r',linewidth=0.5)
+        self.b.axhline(y=np.mean(self.exported_results_res['stride duration'])+np.std(self.exported_results_res['stride duration']),linestyle='--',color='r',linewidth=0.5)
+        self.b.text(0.8, 0.8,("Stride std:%s ms, Stride cov:%s%%"%(self.lbl_SDstride.cget("text"),self.lbl_CVstride.cget("text"))),size=20,transform=self.figure2.transFigure,ha="center", va="top", bbox=dict(facecolor='red', alpha=0.5))
+        self.canvas.draw()
+        
         
         
     def plot_graph(self,event=None,plot_name=""):
@@ -426,7 +445,7 @@ class MyApplication:
             pass     
 
         # Setup matplotlib canvas
-        self.figure = Figure(figsize=(7, 6), dpi=100)
+        self.figure = Figure(figsize=(6, 5), dpi=100)
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.fcontainer)
         self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         #set method on click

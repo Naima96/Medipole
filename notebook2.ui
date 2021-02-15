@@ -1,10 +1,13 @@
 <?xml version='1.0' encoding='utf-8'?>
 <interface version="1.0">
   <object class="tk.Toplevel" id="mainwindow">
+    <property name="background">#ffffff</property>
     <property name="container">false</property>
     <property name="geometry">1440x900</property>
     <property name="height">200</property>
+    <property name="resizable">both</property>
     <property name="takefocus">false</property>
+    <property name="title" translatable="yes">Medipole</property>
     <property name="width">200</property>
     <child>
       <object class="ttk.Notebook" id="notebook_1">
@@ -27,6 +30,7 @@
             <child>
               <object class="ttk.Frame" id="frame_5">
                 <property name="height">200</property>
+                <property name="relief">flat</property>
                 <property name="text" translatable="yes">Turn1: (start,stop)
 Turn2: (start,stop)
 Turn3: (start,stop)
@@ -35,6 +39,8 @@ Turn5: (start,stop)
 </property>
                 <property name="width">200</property>
                 <layout manager="pack">
+                  <property name="expand">true</property>
+                  <property name="fill">both</property>
                   <property name="propagate">True</property>
                   <property name="side">top</property>
                 </layout>
@@ -45,11 +51,7 @@ Turn5: (start,stop)
                     <property name="text" translatable="yes">choose subject</property>
                     <property name="width">0</property>
                     <layout manager="grid">
-                      <property name="padx">10</property>
                       <property name="propagate">True</property>
-                      <property name="sticky">w</property>
-                      <property type="row" id="0" name="minsize">0</property>
-                      <property type="row" id="0" name="pad">0</property>
                     </layout>
                     <child>
                       <object class="pygubu.builder.widgets.pathchooserinput" id="filepath">
@@ -120,156 +122,17 @@ Turn5: (start,stop)
                   </object>
                 </child>
                 <child>
-                  <object class="ttk.Labelframe" id="labelframe_3">
-                    <property name="height">0</property>
-                    <property name="relief">flat</property>
-                    <property name="text" translatable="yes">Sensor information</property>
-                    <property name="width">0</property>
-                    <layout manager="grid">
-                      <property name="column">0</property>
-                      <property name="padx">10</property>
-                      <property name="pady">0</property>
-                      <property name="propagate">True</property>
-                      <property name="row">1</property>
-                      <property name="sticky">w</property>
-                      <property type="row" id="0" name="minsize">0</property>
-                      <property type="row" id="0" name="pad">0</property>
-                      <property type="row" id="1" name="minsize">20</property>
-                      <property type="row" id="1" name="pad">10</property>
-                    </layout>
-                    <child>
-                      <object class="ttk.Label" id="label_7">
-                        <property name="text" translatable="yes">Position of sensor:</property>
-                        <layout manager="grid">
-                          <property name="ipadx">10</property>
-                          <property name="ipady">0</property>
-                          <property name="propagate">True</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Radiobutton" id="radiobutton_1">
-                        <property name="state">disabled</property>
-                        <property name="text" translatable="yes">Waist</property>
-                        <layout manager="grid">
-                          <property name="column">0</property>
-                          <property name="padx">10</property>
-                          <property name="pady">10</property>
-                          <property name="propagate">True</property>
-                          <property name="row">1</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Radiobutton" id="radiobutton_2">
-                        <property name="state">disabled</property>
-                        <property name="text" translatable="yes">Pocket</property>
-                        <layout manager="grid">
-                          <property name="column">1</property>
-                          <property name="ipadx">10</property>
-                          <property name="padx">10</property>
-                          <property name="pady">10</property>
-                          <property name="propagate">True</property>
-                          <property name="row">1</property>
-                          <property name="sticky">w</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Radiobutton" id="radiobutton_3">
-                        <property name="state">disabled</property>
-                        <property name="text" translatable="yes">Hand</property>
-                        <layout manager="grid">
-                          <property name="column">2</property>
-                          <property name="padx">10</property>
-                          <property name="propagate">True</property>
-                          <property name="row">1</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Label" id="label_8">
-                        <property name="text" translatable="yes">Sampling frequency</property>
-                        <layout manager="grid">
-                          <property name="column">0</property>
-                          <property name="padx">10</property>
-                          <property name="propagate">True</property>
-                          <property name="row">2</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Entry" id="entry_3">
-                        <property name="state">disabled</property>
-                        <property name="text" translatable="yes">100</property>
-                        <layout manager="grid">
-                          <property name="column">1</property>
-                          <property name="propagate">True</property>
-                          <property name="row">2</property>
-                          <property name="sticky">w</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Label" id="label_2">
-                        <property name="text" translatable="yes">Acceleration unit</property>
-                        <layout manager="grid">
-                          <property name="column">0</property>
-                          <property name="propagate">True</property>
-                          <property name="row">3</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Combobox" id="combobox_1">
-                        <property name="exportselection">false</property>
-                        <property name="state">disabled</property>
-                        <bind sequence="&lt;&lt;ComboboxSelected&gt;&gt;" handler="on_accunit_selected" add="" />
-                        <layout manager="grid">
-                          <property name="column">1</property>
-                          <property name="propagate">True</property>
-                          <property name="row">3</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Label" id="label_3">
-                        <property name="text" translatable="yes">Gyroscope unit</property>
-                        <layout manager="grid">
-                          <property name="column">0</property>
-                          <property name="propagate">True</property>
-                          <property name="row">4</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Combobox" id="combobox_2">
-                        <property name="state">disabled</property>
-                        <bind sequence="&lt;&lt;ComboboxSelected&gt;&gt;" handler="on_gyrounit_selected" add="" />
-                        <layout manager="grid">
-                          <property name="column">1</property>
-                          <property name="propagate">True</property>
-                          <property name="row">4</property>
-                        </layout>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
                   <object class="ttk.Frame" id="frame_6">
-                    <property name="height">600</property>
+                    <property name="height">400</property>
                     <property name="relief">raised</property>
-                    <property name="width">700</property>
-                    <layout manager="grid">
-                      <property name="column">2</property>
-                      <property name="columnspan">3</property>
-                      <property name="padx">10</property>
-                      <property name="pady">10</property>
-                      <property name="propagate">True</property>
-                      <property name="row">0</property>
-                      <property name="rowspan">5</property>
-                      <property type="row" id="0" name="minsize">0</property>
-                      <property type="row" id="0" name="pad">0</property>
+                    <property name="width">500</property>
+                    <layout manager="place">
+                      <property name="anchor">nw</property>
+                      <property name="relwidth">0.44</property>
+                      <property name="relx">0.32</property>
+                      <property name="rely">0.0</property>
+                      <property name="x">0</property>
+                      <property name="y">0</property>
                     </layout>
                     <child>
                       <object class="ttk.Frame" id="frame_7">
@@ -280,6 +143,8 @@ Turn5: (start,stop)
                           <property name="pady">10</property>
                           <property name="propagate">True</property>
                           <property name="row">1</property>
+                          <property type="col" id="0" name="weight">1</property>
+                          <property type="row" id="1" name="weight">1</property>
                         </layout>
                         <child>
                           <object class="ttk.Label" id="label_10">
@@ -359,6 +224,8 @@ Turn5: (start,stop)
                           <property name="columnspan">4</property>
                           <property name="propagate">True</property>
                           <property name="row">2</property>
+                          <property type="col" id="0" name="weight">1</property>
+                          <property type="row" id="2" name="weight">1</property>
                         </layout>
                       </object>
                     </child>
@@ -369,6 +236,7 @@ Turn5: (start,stop)
                           <property name="column">0</property>
                           <property name="propagate">True</property>
                           <property name="row">0</property>
+                          <property type="col" id="0" name="weight">1</property>
                         </layout>
                       </object>
                     </child>
@@ -381,6 +249,8 @@ Turn5: (start,stop)
                           <property name="pady">10</property>
                           <property name="propagate">True</property>
                           <property name="row">3</property>
+                          <property type="col" id="0" name="weight">1</property>
+                          <property type="row" id="3" name="weight">1</property>
                         </layout>
                         <child>
                           <object class="ttk.Button" id="btn_detect_turn">
@@ -421,98 +291,14 @@ Turn5: (start,stop)
                   </object>
                 </child>
                 <child>
-                  <object class="ttk.Labelframe" id="labelframe_2">
-                    <property name="height">0</property>
-                    <property name="text" translatable="yes">Preprocessing</property>
-                    <property name="width">0</property>
-                    <layout manager="grid">
-                      <property name="column">0</property>
-                      <property name="padx">10</property>
-                      <property name="propagate">True</property>
-                      <property name="row">2</property>
-                      <property name="sticky">w</property>
-                    </layout>
-                    <child>
-                      <object class="ttk.Entry" id="ent_cf">
-                        <property name="justify">left</property>
-                        <property name="state">normal</property>
-                        <property name="text" translatable="yes">10</property>
-                        <layout manager="grid">
-                          <property name="column">1</property>
-                          <property name="propagate">True</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Label" id="label_1">
-                        <property name="text" translatable="yes">Cut_off frequency</property>
-                        <layout manager="grid">
-                          <property name="column">0</property>
-                          <property name="propagate">True</property>
-                          <property name="row">0</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Label" id="label_4_5">
-                        <property name="text" translatable="yes">Remove gait initiation (s)</property>
-                        <layout manager="grid">
-                          <property name="column">0</property>
-                          <property name="propagate">True</property>
-                          <property name="row">1</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Entry" id="entry_2_3">
-                        <property name="cursor">arrow</property>
-                        <property name="font">TkDefaultFont</property>
-                        <property name="state">disabled</property>
-                        <property name="takefocus">true</property>
-                        <property name="text" translatable="yes">0</property>
-                        <layout manager="grid">
-                          <property name="column">1</property>
-                          <property name="propagate">True</property>
-                          <property name="row">1</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Label" id="label_6">
-                        <property name="text" translatable="yes">Remove gait termination (s)</property>
-                        <layout manager="grid">
-                          <property name="column">0</property>
-                          <property name="propagate">True</property>
-                          <property name="row">2</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Entry" id="entry_4_5">
-                        <property name="font">TkDefaultFont</property>
-                        <property name="justify">left</property>
-                        <property name="state">disabled</property>
-                        <property name="text" translatable="yes">0</property>
-                        <layout manager="grid">
-                          <property name="column">1</property>
-                          <property name="propagate">True</property>
-                          <property name="row">2</property>
-                        </layout>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
                   <object class="ttk.Labelframe" id="labelframe_3_4">
                     <property name="height">200</property>
                     <property name="text" translatable="yes">Calculations</property>
                     <property name="width">200</property>
                     <layout manager="grid">
                       <property name="column">0</property>
-                      <property name="padx">10</property>
                       <property name="propagate">True</property>
-                      <property name="row">3</property>
-                      <property name="sticky">w</property>
+                      <property name="row">1</property>
                     </layout>
                     <child>
                       <object class="ttk.Button" id="btn_intr_filt">
@@ -543,16 +329,9 @@ Turn5: (start,stop)
                     <property name="text" translatable="yes">Walking periods:</property>
                     <property name="width">0</property>
                     <layout manager="grid">
-                      <property name="column">1</property>
-                      <property name="padx">20</property>
+                      <property name="padx">10</property>
                       <property name="propagate">True</property>
-                      <property name="row">0</property>
-                      <property name="rowspan">10</property>
-                      <property name="sticky">n</property>
-                      <property type="row" id="0" name="minsize">0</property>
-                      <property type="row" id="0" name="pad">0</property>
-                      <property type="row" id="1" name="minsize">20</property>
-                      <property type="row" id="1" name="pad">10</property>
+                      <property name="row">2</property>
                     </layout>
                     <child>
                       <object class="ttk.Label" id="label_14">
@@ -715,63 +494,6 @@ Turn5: (start,stop)
                     </child>
                   </object>
                 </child>
-                <child>
-                  <object class="ttk.Labelframe" id="labelframe_4">
-                    <property name="height">200</property>
-                    <property name="text" translatable="yes">Statistical filtering</property>
-                    <property name="width">200</property>
-                    <layout manager="grid">
-                      <property name="padx">10</property>
-                      <property name="row">4</property>
-                      <property name="sticky">w</property>
-                    </layout>
-                    <child>
-                      <object class="ttk.Checkbutton" id="checkbutton_1">
-                        <property name="text" translatable="yes">Remove values more than "N" SD from mean</property>
-                        <layout manager="grid">
-                          <property name="padx">10</property>
-                          <property name="propagate">True</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Label" id="label_9">
-                        <property name="text" translatable="yes">N =</property>
-                        <layout manager="grid">
-                          <property name="column">0</property>
-                          <property name="padx">10</property>
-                          <property name="propagate">True</property>
-                          <property name="row">1</property>
-                          <property name="sticky">w</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Entry" id="entry_4">
-                        <property name="exportselection">false</property>
-                        <property name="font">TkDefaultFont</property>
-                        <property name="text" translatable="yes">3</property>
-                        <layout manager="grid">
-                          <property name="column">0</property>
-                          <property name="propagate">True</property>
-                          <property name="row">1</property>
-                        </layout>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="ttk.Checkbutton" id="checkbutton_2">
-                        <property name="text" translatable="yes">Remove abnormal stride time </property>
-                        <layout manager="grid">
-                          <property name="column">0</property>
-                          <property name="padx">10</property>
-                          <property name="propagate">True</property>
-                          <property name="row">2</property>
-                          <property name="sticky">w</property>
-                        </layout>
-                      </object>
-                    </child>
-                  </object>
-                </child>
               </object>
             </child>
           </object>
@@ -787,6 +509,8 @@ Turn5: (start,stop)
                 <property name="height">200</property>
                 <property name="width">200</property>
                 <layout manager="pack">
+                  <property name="expand">true</property>
+                  <property name="fill">both</property>
                   <property name="propagate">True</property>
                   <property name="side">top</property>
                 </layout>
@@ -797,10 +521,11 @@ Turn5: (start,stop)
                     <property name="width">200</property>
                     <layout manager="grid">
                       <property name="column">0</property>
+                      <property name="columnspan">2</property>
                       <property name="padx">20</property>
-                      <property name="pady">20</property>
+                      <property name="pady">10</property>
                       <property name="propagate">True</property>
-                      <property name="row">2</property>
+                      <property name="row">0</property>
                       <property name="sticky">w</property>
                     </layout>
                     <child>
@@ -861,9 +586,10 @@ Turn5: (start,stop)
                     <property name="width">200</property>
                     <layout manager="grid">
                       <property name="column">0</property>
+                      <property name="columnspan">2</property>
                       <property name="padx">20</property>
                       <property name="propagate">True</property>
-                      <property name="row">3</property>
+                      <property name="row">1</property>
                     </layout>
                     <child>
                       <object class="pygubu.builder.widgets.scrollbarhelper" id="scrollbarhelper_3">
@@ -952,12 +678,12 @@ Turn5: (start,stop)
                     <property name="height">200</property>
                     <property name="text" translatable="yes">Export Options</property>
                     <property name="width">200</property>
-                    <layout manager="grid">
-                      <property name="column">0</property>
-                      <property name="padx">20</property>
-                      <property name="propagate">True</property>
-                      <property name="row">5</property>
-                      <property name="sticky">w</property>
+                    <layout manager="place">
+                      <property name="anchor">nw</property>
+                      <property name="relx">0.33</property>
+                      <property name="rely">0.08</property>
+                      <property name="x">0</property>
+                      <property name="y">0</property>
                     </layout>
                     <child>
                       <object class="pygubu.builder.widgets.pathchooserinput" id="path_choose_Export">
@@ -1001,10 +727,11 @@ Turn5: (start,stop)
                     <property name="width">200</property>
                     <layout manager="grid">
                       <property name="column">0</property>
+                      <property name="columnspan">2</property>
                       <property name="padx">20</property>
-                      <property name="pady">20</property>
+                      <property name="pady">10</property>
                       <property name="propagate">True</property>
-                      <property name="row">4</property>
+                      <property name="row">2</property>
                       <property name="sticky">w</property>
                     </layout>
                     <child>
@@ -1095,6 +822,53 @@ Turn5: (start,stop)
                           <property name="column">1</property>
                           <property name="propagate">True</property>
                           <property name="row">3</property>
+                        </layout>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Notebook.Tab" id="tab_2_1">
+            <property name="compound">bottom</property>
+            <property name="padding">10</property>
+            <property name="state">normal</property>
+            <property name="text" translatable="yes">Plot</property>
+            <child>
+              <object class="ttk.Frame" id="frame_3_1">
+                <property name="height">200</property>
+                <property name="width">200</property>
+                <layout manager="pack">
+                  <property name="expand">true</property>
+                  <property name="fill">both</property>
+                  <property name="propagate">True</property>
+                  <property name="side">top</property>
+                </layout>
+                <child>
+                  <object class="ttk.Labelframe" id="labelframe_1_2_5">
+                    <property name="height">200</property>
+                    <property name="text" translatable="yes">Plot stride time</property>
+                    <property name="width">200</property>
+                    <layout manager="grid">
+                      <property name="column">3</property>
+                      <property name="columnspan">1</property>
+                      <property name="padx">10</property>
+                      <property name="pady">10</property>
+                      <property name="propagate">True</property>
+                      <property name="row">0</property>
+                      <property name="rowspan">2</property>
+                      <property name="sticky">ne</property>
+                    </layout>
+                    <child>
+                      <object class="ttk.Frame" id="fcontainer2">
+                        <property name="height">200</property>
+                        <property name="width">200</property>
+                        <layout manager="pack">
+                          <property name="propagate">True</property>
+                          <property name="side">top</property>
                         </layout>
                       </object>
                     </child>
