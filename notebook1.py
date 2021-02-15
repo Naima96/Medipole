@@ -418,7 +418,7 @@ class MyApplication:
         
         
     def plot_stridetime(self):
-        self.figure2 = Figure(figsize=(5, 4), dpi=100)
+        self.figure2 = Figure(figsize=(7, 6), dpi=100)
         self.canvas2 = FigureCanvasTkAgg(self.figure2, master=self.fcontainer2)
         self.canvas2.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         self.toolbar = NavigationToolbar2Tk(self.canvas2, self.fcontainer2)
@@ -432,7 +432,7 @@ class MyApplication:
         self.b.axhline(y=np.mean(self.exported_results_res['stride duration']),label='Average Stride Time',color='r')
         self.b.axhline(y=np.mean(self.exported_results_res['stride duration'])-np.std(self.exported_results_res['stride duration']),linestyle='--',color='r',linewidth=0.5)
         self.b.axhline(y=np.mean(self.exported_results_res['stride duration'])+np.std(self.exported_results_res['stride duration']),linestyle='--',color='r',linewidth=0.5)
-        self.b.text(0.8, 0.8,("Stride std:%s ms, Stride cov:%s%%"%(self.lbl_SDstride.cget("text"),self.lbl_CVstride.cget("text"))),size=20,transform=self.figure2.transFigure,ha="center", va="top", bbox=dict(facecolor='red', alpha=0.5))
+        self.b.text(0.8, 0.8,("Stride std:%s, Stride cov:%s"%(self.lbl_SDstride.cget("text"),self.lbl_CVstride.cget("text"))),size=10,transform=self.figure2.transFigure,ha="right", va="top", bbox=dict(facecolor='red', alpha=0.5))
         self.canvas.draw()
         
         
