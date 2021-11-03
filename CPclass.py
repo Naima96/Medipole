@@ -13,16 +13,24 @@ from scipy import signal,fft
 from scipy.signal import find_peaks
 import sys
 import os
+from scipy import stats
+from pickle import load
+import joblib
 class phone(object):
     '''
     create phone object interpolated and filtered and aligned with treadmill data 
     '''
-    def __init__(self, filename,app="sensor play",t="calib",allsensors=False):
+    def __init__(self, filename="",app="sensor play",t="calib",acc=[],gyro=[],allsensors=False):
         """
         create phone object 
         :param str filename: .csv file 
         """
         #---READ csv FILE---
+        if(app=="manual_entry"):
+            
+            self.acc_interp=acc
+            self.gyro_interp=gyro
+            
         if(app=="PhysicsToolbox"):
             path="d:\\Users\\al-abiad\\Desktop\\montreal gaitup result\\Projet MBAM\\Data PhysicsToolboxSuite"
             filename=os.path.join(path,"2019-12-0315.48.10 S02 POST MAX.csv ")
@@ -38,25 +46,48 @@ class phone(object):
             path=filename
             filename=os.path.join(path,"ACC.txt" )
             df=pd.read_csv(filename, delimiter=",")
-            time=df["Time [s]"].values
-            time=time-time[0]
+            time_acc=df["Time [s]"].values
+            time_start_acc=time_acc[0]
             acce_uncalib=df.iloc[:,1:4]
             acce_calib=df.iloc[:,4:7]
-            acce_uncalib.index=time
-            acce_calib.index=time
-            acce_calib = acce_calib[~acce_calib.index.duplicated()]
-            acce_uncalib = acce_uncalib[~acce_uncalib.index.duplicated()]
+            acce_uncalib.index=time_acc
+            acce_calib.index=time_acc
+
             
             filename=os.path.join(path,"GYRO.txt" )
             df=pd.read_csv(filename, delimiter=",")
-            time=df["Time(s)"].values
-            time=time-time[0]
+            time_gyro=df["Time(s)"].values
+            time_start_gyro=time_gyro[0]
             gyro_uncalib=df.iloc[:,1:4]
             gyro_calib=df.iloc[:,4:7]
-            gyro_uncalib.index=time
-            gyro_calib.index=time
+            
+            gyro_uncalib.index=time_gyro
+            gyro_calib.index=time_gyro
+            
+            time_start=np.minimum(time_start_gyro,time_start_acc)
+            
+            
+            
+
+            acce_calib = acce_calib[~acce_calib.index.duplicated()]
+            acce_uncalib = acce_uncalib[~acce_uncalib.index.duplicated()]
+
             gyro_calib = gyro_calib[~gyro_calib.index.duplicated()]
             gyro_uncalib = gyro_uncalib[~gyro_uncalib.index.duplicated()]
+            
+            
+            acce_calib=acce_calib[acce_calib.index>time_start]
+            acce_uncalib=acce_uncalib[acce_uncalib.index>time_start]
+            
+            gyro_calib=gyro_calib[gyro_calib.index>time_start]
+            gyro_uncalib=gyro_uncalib[gyro_uncalib.index>time_start]
+            
+            acce_calib.index=acce_calib.index-acce_calib.index[0]
+            
+            acce_uncalib.index=acce_uncalib.index-acce_uncalib.index[0]
+            
+            gyro_calib.index=gyro_calib.index-gyro_calib.index[0]
+            gyro_uncalib.index=gyro_uncalib.index-gyro_uncalib.index[0]
             
             filename=os.path.join(path,"MAG.txt" )
             df=pd.read_csv(filename, delimiter=",")
@@ -72,7 +103,7 @@ class phone(object):
             if t=="calib":
                 self.acc_rawdata=acce_calib
                 self.gyro_rawdata=gyro_calib
-        else:
+        elif filename!="":
             df=pd.read_csv(filename, delimiter=",")   
             if (app=="sensor play"):
                 time=pd.to_datetime(df['Timestamp'])#change string to datetime
@@ -167,7 +198,17 @@ class phone(object):
         c=180/np.pi
         self.gyro_interp= self.gyro_interp.mul(c)
         return()
+    
+    def deg2rad(self):
+        """
+        Change unit of gyroscope signal into deg/sec
+        """
+        c=np.pi/180
+        self.gyro_interp= self.gyro_interp.mul(c)
+        return()
         
+    
+    
     def plot_phases(self,TM,weight,zoom=True,events=1,part="pocket"):
         """
         plot the data into three parts depending on the cellphone holding position
@@ -629,21 +670,36 @@ class phone(object):
         self.acc_hand=self.acc_hand.reset_index(drop=True)
         
         
-    def crop_medipole(self,fs=100,phases=[]):
-        
+    def crop_medipole(self,fs=100,phases=[],turn_time=0):
+        ind=0
         walkingperiodsgyro=[]
         walkingperiodsacc=[]
+        turn_time=turn_time*100
         for (start,stop) in phases:
-            df=self.gyro_interp.iloc[(start)*fs:(stop)*fs,:].copy()
-            df=df.reset_index(drop=True)
-            walkingperiodsgyro.append(df)
-            
-            df=self.acc_interp.iloc[(start)*fs:(stop)*fs,:].copy()
-            df=df.reset_index(drop=True)
-            walkingperiodsacc.append(df)
-        
-        self.walkingperiodsgyro=walkingperiodsgyro
-        self.walkingperiodsacc=walkingperiodsacc
+            if ind==0:
+                print("ind =0")
+                df=self.gyro_interp.iloc[(start)*fs:(stop)*fs,:].copy()
+                df=df.reset_index(drop=True)
+                walkingperiodsgyro.append(df)
+                
+                df=self.acc_interp.iloc[(start)*fs:(stop)*fs,:].copy()
+                df=df.reset_index(drop=True)
+                walkingperiodsacc.append(df)
+            else:
+                print("ind =1")
+                print(start+turn_time)
+                print(start)
+                df=self.gyro_interp.iloc[(start+turn_time)*fs:(stop)*fs,:].copy()
+                df=df.reset_index(drop=True)
+                walkingperiodsgyro.append(df)
+                
+                df=self.acc_interp.iloc[(start+turn_time)*fs:(stop)*fs,:].copy()
+                df=df.reset_index(drop=True)
+                walkingperiodsacc.append(df)
+            ind=1
+                
+        return(walkingperiodsacc,walkingperiodsgyro)
+
         
 #    def detect_turns(self):
         
@@ -688,6 +744,17 @@ class phone(object):
             
 #            left_HS.to_csv('left_HS.csv',index=True)
 #            right_HS.to_csv('right_HS.csv',index=True)
+
+
+    def manual_crop(self,ind_start=0,ind_stop=0):
+        print("croping")
+        
+        if ind_stop==0:
+            ind_stop=len(self.acc_interp)-1
+            
+        self.acc_interp=self.acc_interp.iloc[ind_start:ind_stop,:].copy()
+        self.gyro_interp=self.gyro_interp.iloc[ind_start:ind_stop,:].copy()
+        
             
     def save_file(self):
         """
@@ -842,7 +909,7 @@ class phone(object):
         
         return()
         
-    def computeVarStride(self,fs=100,remove_outliers=True,N=1,use_peaks=True,pocket=True,remove_step=0,round_data=True):
+    def computeVarStride(self,fs=100,remove_outliers=True,N=1,use_smartstep=False,use_peaks=True,pocket=True,remove_step=0,round_data=True):
         """
         compute stride time 
         :param int fs: sampling frequency
@@ -853,13 +920,17 @@ class phone(object):
         """
         #note: we remove two steps from beginging and end
         cycle_tempparam = {}
-        if use_peaks:
-            peaks=np.array(self.peakandvalley['peak_index'])
-            if remove_step!=0:
-                peaks=peaks[remove_step:len(peaks)-remove_step]
+        if use_smartstep:
+            peaks=self.steps_smartstep
         else:
-            peaks=np.array(self.peakandvalley['valley_index'])
-            
+            if use_peaks:
+                peaks=np.array(self.peakandvalley['peak_index'])
+                if remove_step!=0:
+                    peaks=peaks[remove_step:len(peaks)-remove_step]
+            else:
+                peaks=np.array(self.peakandvalley['valley_index'])
+
+
         if pocket:
             #---if cellphone is in the pocket---
             stride_time=np.diff(peaks)/fs
@@ -884,8 +955,8 @@ class phone(object):
             rs=stride_time_contralateral
             
             if remove_outliers:
-                stride_time_leading=np.array([i for i in stride_time_leading if i > 0.5 and i < 1.8])
-                stride_time_contralateral=np.array([i for i in stride_time_contralateral if i > 0.5 and i < 1.8])
+                stride_time_leading=np.array([i for i in stride_time_leading if i > 0.8 and i < 1.5])
+                stride_time_contralateral=np.array([i for i in stride_time_contralateral if i > 0.8 and i < 1.5])
                 #---stride time leading foot---
                 mean=np.mean(stride_time_leading)
                 cut_off=N*np.std(stride_time_leading)
@@ -916,6 +987,9 @@ class phone(object):
                 rl_stride.append(ls[j])
                 rl_stride.append(rs[j])
                 j=j+1
+                
+            print("")
+            print(rl_stride)
             
             rl_stride=np.vstack(rl_stride)
             cycle_tempparam['stridetime']=rl_stride
@@ -972,6 +1046,7 @@ class phone(object):
             stride_peak=np.diff(peak_index)
             strides=[]
             if remove_outliers:
+                print("we are in remove outliers")
                 mean=np.mean(stride_peak)
                 cut_off=N*np.std(stride_peak)
                 lower, upper =  mean- cut_off, mean + cut_off
@@ -980,6 +1055,8 @@ class phone(object):
                     if stride_peak[i]<upper and stride_peak[i]>lower:
                         strides.append((peak_index[i],peak_index[i+1]))
                 strides=np.vstack(strides)
+                print("the strides are created")
+                self.cpstrides=strides
            
         Total_strides_acc=[]
         Total_strides_gyro=[]
@@ -1018,6 +1095,10 @@ class phone(object):
             
         self.acc_strides=Total_strides_acc
         self.gyro_strides=Total_strides_gyro
+        
+ 
+        
+        
         
            
         
@@ -1127,7 +1208,6 @@ class phone(object):
         return(x,self.gaitup)
         
     def detectstartofwalk(self,sig1,thresh=3): 
-        
         i=0
         N_wf=128
         condition=True    
@@ -1557,26 +1637,468 @@ class phone(object):
         self.allsteps=allsteps
         
         
+    def normal_signal(self,threeD_acc,threeD_gyro,peaks=[],remove_outliers=True,N=2,Numberofstrides=140,plot=True):
+        
+        signal_acc=self.acc_magnitude
+        signal_gyro=self.gyro_magnitude
         
         
+        peak_index=peaks
+        peak_index=peak_index[::2]
+       
+        stride_peak=np.diff(peak_index)
+        strides=[]
+        
+        if remove_outliers:
+            print("we are in remove outliers")
+            mean=np.mean(stride_peak)
+            cut_off=N*np.std(stride_peak)
+            lower, upper =  mean- cut_off, mean + cut_off
             
-                            
-            
-            
+            for i in range(0,len(stride_peak)):
+                if stride_peak[i]<upper and stride_peak[i]>lower:
+                    strides.append((peak_index[i],peak_index[i+1]))
+            strides=np.vstack(strides)
+            print("the strides are created")
+        else:
+            for i in range(0,len(stride_peak)):
+                strides.append((peak_index[i],peak_index[i+1]))
+            strides=np.vstack(strides)
+        self.stridess=strides
+        
+        crop_signal_acc=signal_acc[strides[0,0]:strides[Numberofstrides,1]]
+        crop_signal_gyro=signal_gyro[strides[0,0]:strides[Numberofstrides,1]]
+        
+        threeD_acc=threeD_acc.iloc[strides[0,0]:strides[Numberofstrides,1],:]
+        threeD_gyro=threeD_gyro.iloc[strides[0,0]:strides[Numberofstrides,1],:]
         
         
+        
+        normalize_signal_acc=np.zeros((100*Numberofstrides))
+        normalize_signal_gyro=np.zeros((100*Numberofstrides))
+        
+        normalize_threesignal_acc=np.zeros((100*Numberofstrides,3))
+        normalize_threesignal_gyro=np.zeros((100*Numberofstrides,3))
+        
+        
+        
+        for j in range (0,100*Numberofstrides):
+            normalize_signal_acc[j]=crop_signal_acc[np.round(j*len(crop_signal_acc)/(100*Numberofstrides)).astype('int')]
+            normalize_signal_gyro[j]=crop_signal_gyro[np.round(j*len(crop_signal_gyro)/(100*Numberofstrides)).astype('int')]
+            
+            normalize_threesignal_acc[j,0]=threeD_acc.iloc[np.round(j*len(threeD_acc)/(100*Numberofstrides)).astype('int'),0]
+            normalize_threesignal_acc[j,1]=threeD_acc.iloc[np.round(j*len(threeD_acc)/(100*Numberofstrides)).astype('int'),1]
+            normalize_threesignal_acc[j,2]=threeD_acc.iloc[np.round(j*len(threeD_acc)/(100*Numberofstrides)).astype('int'),2]
+            
+
+            
+            normalize_threesignal_gyro[j,0]=threeD_gyro.iloc[np.round(j*len(threeD_gyro)/(100*Numberofstrides)).astype('int'),0]
+            normalize_threesignal_gyro[j,1]=threeD_gyro.iloc[np.round(j*len(threeD_gyro)/(100*Numberofstrides)).astype('int'),1]
+            normalize_threesignal_gyro[j,2]=threeD_gyro.iloc[np.round(j*len(threeD_gyro)/(100*Numberofstrides)).astype('int'),2]
             
         
+        Total_strides_acc=normalize_signal_acc
+        Total_strides_gyro=normalize_signal_gyro
+        
+        normalize_threeD_acc=pd.DataFrame(data=normalize_threesignal_acc,columns=threeD_acc.columns)
+        normalize_threeD_gyro=pd.DataFrame(data=normalize_threesignal_gyro,columns=threeD_acc.columns)
+        
+        #to remove the mean
+        # normalize_threeD_acc.iloc[:,0]=normalize_threeD_acc.iloc[:,0]-np.mean(normalize_threeD_acc.iloc[:,0])
+        # normalize_threeD_acc.iloc[:,1]=normalize_threeD_acc.iloc[:,1]-np.mean(normalize_threeD_acc.iloc[:,1])
+        # normalize_threeD_acc.iloc[:,2]=normalize_threeD_acc.iloc[:,2]-np.mean(normalize_threeD_acc.iloc[:,2])
+        
+        
+        if plot:
+            plt.figure(figsize=(20,10))
+            plt.plot(Total_strides_acc)
+            plt.xlabel('samples',fontsize=60,weight='bold')
+            plt.ylabel('[m/s^2]',fontsize=60,weight='bold')
+            
+            
+            plt.figure(figsize=(20,10))
+            plt.plot(Total_strides_gyro)
+            plt.xlabel('samples',fontsize=60,weight='bold')
+            plt.ylabel('[deg/s]',fontsize=60,weight='bold')
+        
+        
+        self.norma_acc_strides=Total_strides_acc
+        self.norma_gyro_strides=Total_strides_gyro  
+        
+        self.norma_threeD_acc=normalize_threeD_acc
+        self.norma_threeD_gyro=normalize_threeD_gyro
+    
         
     
-            
-                
-            
-                
-            
+    def findMiddle(self,input_list):
+        middle = float(len(input_list))/2
+        if middle % 2 != 0:
+            return int(middle - .5)
+        else:
+            return int(middle)
         
-            
+    def calc_rms(self,data):
+        return np.sqrt(np.mean(data ** 2))
+    
+    def calc_mean_abs_deviation(self,data):
+        return stats.median_abs_deviation(data)
+    
+    def calc_data_entropy(self,data):
+        value, counts = np.unique(data, return_counts=True)
+        return stats.entropy(counts)
+    
+    def calc_index_max(self,data):
+        data = list(data)
+        return data.index(min(data))
+    
+    def calc_index_min(self,data):
+        data = list(data)
+        return data.index(max(data))
+    
+    def calc_energy(self,data):
+        squares = data ** 2
+        return squares.sum()
+    
+    def calc_sma(self,data):
+        absolute = list(map(abs, data))
+        return sum(absolute)
+    
+    def _dominant_frequency(self,signal_x, sampling_rate=100):
+
+        signal_x = signal_x-np.mean(signal_x)
+        dim = signal_x.shape
         
+        #valerie from matlab
+        nfft=1024
+        freq_hat = np.fft.fftfreq(nfft) * sampling_rate
+        
+        #freq are freq from 0 to 50 hz
+        freq = freq_hat[0:nfft // 2]
+        
+        #valerie from matlab
+        fmin=0.5
+        fmax=4 
+        lowind=np.where(freq>fmin)[0][0]
+        upind=np.max(np.where(freq<fmax))
+    
+        # fourier transform
+        #valerie add hamming
+        # nfft is used for padding
+        haming= np.hamming(dim[0])
+        sp_hat = np.fft.fft(signal_x*haming, nfft)
+        furval = sp_hat[0:nfft // 2] * np.conjugate(sp_hat[0:nfft // 2])
+        furval=furval/sum(furval)
+    
+        #from the internet
+        # cutoff is 12 
+        cutoff=12.0
+        idx1 = freq <= cutoff
+        idx_cutoff = np.argwhere(idx1)
+        #all freq less than cutoff
+        freq = freq[idx_cutoff]
+        #keep values less than cutoff
+        sp = furval[idx_cutoff]
+        #normalise
+        sp_norm = sp / sum(sp)
+        furval=furval/sum(furval)
+    
+        max_freq = freq[sp_norm.argmax()][0] # Feature 1: dominant freq 
+        max_freq_val = sp_norm.max().real    #Feature 2: magnitude of dominant freq
+        idx2 = (freq > max_freq - 0.5) * (freq < max_freq + 0.5)  
+        idx_freq_range = np.where(idx2)[0]
+        dom_freq_ratio = sp_norm[idx_freq_range].real.sum() #Feature 3: dominant frequency ratio
+    
+        # Calculate Feature 4: spectral flatness 
+        spectral_flatness = 10.0*np.log10(stats.mstats.gmean(sp_norm)/np.mean(sp_norm))
+    
+        # Calculate Feature 5: Estimate spectral entropy
+        spectral_entropy_estimate = 0
+        for isess in range(len(sp_norm)):
+            if sp_norm[isess] != 0:
+                logps = np.log2(sp_norm[isess])
+            else:
+                logps = 0
+            spectral_entropy_estimate = spectral_entropy_estimate - logps * sp_norm[isess]
+    
+        spectral_entropy_estimate = spectral_entropy_estimate / np.log2(len(sp_norm))
+    
+        # from valerie matlab
+        Ns=10
+        domfreq=np.zeros((1,3))
+        fourcoef=np.zeros((1,3), dtype=complex)
+        fourcoef[0,0]=(furval[lowind+np.argmax(np.abs(furval[lowind:upind]))])
+        ind=lowind+np.argmax(np.abs(furval[lowind:upind]))
+        idx=np.where(furval==fourcoef[0,0])[0][0]
+        domfreq[0,0]=freq[idx] # it is equal to the maximum frequency ==Max_freq 
+        furval[np.maximum(1,ind-Ns):(ind+Ns)]=0 
+        fourcoef[0,1]=(furval[lowind+np.argmax(np.abs(furval[lowind:upind]))])
+        ind=lowind+np.argmax(np.abs(furval[lowind:upind]))
+        idx=np.where(furval==fourcoef[0,1])[0][0]
+        domfreq[0,1]=freq[idx] #second dominant freq
+        furval[np.maximum(1,ind-Ns):(ind+Ns)]=0
+        fourcoef[0,2]=(furval[lowind+np.argmax(np.abs(furval[lowind:upind]))])
+        ind=lowind+np.argmax(np.abs(furval[lowind:upind]))
+        idx=np.where(furval==fourcoef[0,2])[0][0]
+        domfreq[0,2]=freq[idx] #Third dominant freq
+    
+        return max_freq,max_freq_val,dom_freq_ratio,spectral_flatness[0].real,spectral_entropy_estimate[0].real,domfreq
+            
+    
+    def calculate_hand_features(self):
+
+        self.calculate_norm_accandgyro(gyro=self.gyro_interp,
+                                       acc=self.acc_interp)
+        
+        acc_mag_unfiltered=self.acc_magnitude
+        gyro_mag_unfiltered=self.gyro_magnitude
+        
+        plt.figure()
+        plt.plot(acc_mag_unfiltered)
+        plt.plot(gyro_mag_unfiltered)
+        
+        self.filter_data(gyro=self.gyro_interp,acc=self.acc_interp,N=10,fc=2,fs=100)
+        
+        self.calculate_norm_accandgyro(gyro=self.gyro_filtered,acc=self.acc_filtered)
+
+        acc_mag_filtered=self.acc_magnitude
+        gyro_mag_filtered=self.gyro_magnitude
+        
+        plt.plot(acc_mag_filtered)
+        plt.plot(gyro_mag_filtered)
+        
+        window_size80= 80
+        window_size5= 5
+        window_size30= 30
+        window_size20= 20
+        window_size50= 50
+        window_size60= 60
+        window_size70= 70
+        window_slide_step=1
+        window_freq=128
+        
+        acc_features=pd.DataFrame()
+        gyro_features=pd.DataFrame()
+
+        s=0
+
+        
+        signals=[acc_mag_filtered,gyro_mag_filtered]
+        
+        signals_unfiltered=[acc_mag_unfiltered,gyro_mag_unfiltered]
+
+        ########Feature Calculation#######
+        for sig in signals:
+            print("calculating both signals")
+            acc_minindex_win30=[]
+            acc_skew_win5=[]
+            acc_median_win80=[]
+            acc_valleyprom_win80=[]
+            acc_peakprom_win80=[]
+            acc_peakprom_win50=[]
+            acc_domfreq1=[]
+            acc_kurt_win30=[]
+            
+            gyro_maxindex_win60=[]
+            gyro_skew_win70=[]
+            gyro_skew_win30=[]
+            gyro_maxfreqvalue=[]
+            gyro_SMA_win80=[]
+            gyro_var_win20=[]
+            gyro_maxvalue_win70=[]
+            gyro_valleyprom_win80=[]
+    
+            
+            for i in range(window_freq//2,len(sig)-window_freq//2,window_slide_step):
+                
+                mag30=sig[i-(window_size30//2):i+1+(window_size30//2)]
+                mag30_nomean=mag30-np.mean(mag30)
+                
+                mag5=sig[i-(window_size5//2):i+1+(window_size5//2)]
+
+                
+                mag80=sig[i-(window_size80//2):i+1+(window_size80//2)]
+                mag80_nomean=mag80-np.mean(mag80)
+                
+                mag50=sig[i-(window_size50//2):i+1+(window_size50//2)]
+                mag50_nomean=mag50-np.mean(mag50)
+                
+                mag60=sig[i-(window_size60//2):i+1+(window_size60//2)]
+
+                
+                mag70=sig[i-(window_size70//2):i+1+(window_size70//2)]
+
+                
+                mag20=sig[i-(window_size20//2):i+1+(window_size20//2)]
+                mag20_nomean=mag20-np.mean(mag20)
+                
+                
+                mag_freq=signals_unfiltered[s][i-window_freq//2:i+(window_freq//2)+1]
+                
+
+                #===============================================
+    
+                if s==0:
+                    print("calculating acceleration")
+                    acc_minindex_win30.append(self.calc_index_min(mag30_nomean))
+                    acc_skew_win5.append(stats.skew(mag5))
+                    acc_median_win80.append(np.median(mag80))
+                    acc_kurt_win30.append(stats.kurtosis(mag30))
+                    
+                    peak_index,peak_properties= find_peaks(mag80_nomean,prominence=(None,None)) 
+                    if peak_index.size>0:
+                        ind_mid=self.findMiddle(peak_index)
+                        acc_peakprom_win80.append(peak_properties["prominences"][ind_mid])
+                    else:
+                        acc_peakprom_win80.append(50)
+    
+                    peak_index,peak_properties= find_peaks(mag50_nomean,prominence=(None,None)) 
+                    if peak_index.size>0:
+                        ind_mid=self.findMiddle(peak_index)
+                        acc_peakprom_win50.append(peak_properties["prominences"][ind_mid])
+                    else:
+                        acc_peakprom_win50.append(50)
+                        
+                    valley_index,valley_properties= find_peaks(-mag80_nomean,prominence=(None,None))
+                    if valley_index.size>0:
+                        ind_mid=self.findMiddle(valley_index)
+                        acc_valleyprom_win80.append(valley_properties["prominences"][ind_mid])
+                    else:
+                        acc_valleyprom_win80.append(50)
+                        
+                    _,_,_,_,_,domfreq=self._dominant_frequency(mag_freq)
+    
+    
+                    acc_domfreq1.append(domfreq[0,0])
+    
+                    
+                
+                if s==1:
+                    print("calculating gyroscope")
+                    gyro_skew_win70.append(stats.skew(mag70))
+                    gyro_skew_win30.append(stats.skew(mag30))
+                    gyro_maxindex_win60.append(self.calc_index_max(mag60))
+                    gyro_SMA_win80.append(self.calc_sma(mag80_nomean))
+                    gyro_var_win20.append(np.var(mag20_nomean))
+                    gyro_maxvalue_win70.append(np.amax(mag70))
+                    valley_index,valley_properties= find_peaks(-mag80_nomean,prominence=(None,None))
+                
+                    if valley_index.size>0:
+                        ind_mid=self.findMiddle(valley_index)
+                        gyro_valleyprom_win80.append(valley_properties["prominences"][ind_mid])
+                    else:
+                        gyro_valleyprom_win80.append(50)
+                        
+                    _,max_fr_val,_,_,_,_=self._dominant_frequency(mag_freq)
+    
+                    gyro_maxfreqvalue.append(max_fr_val)
+                    
+            if s==0: 
+                print("acceleration features")
+                acc_features['acc_indMin_win30']=acc_minindex_win30
+                acc_features['acc_skew_win5']=acc_skew_win5
+                acc_features['acc_Median_win80']=acc_median_win80
+                acc_features['acc_peak_prominences80']=acc_peakprom_win80
+                acc_features['acc_peak_prominences50']=acc_peakprom_win50
+                acc_features['acc_valley_prominences80']=acc_valleyprom_win80
+                acc_features['acc_domfreq1']=acc_domfreq1
+                acc_features['acc_kurt_win30']=acc_kurt_win30
+                self.acc_features=acc_features
+    
+            if s==1:
+                print("gyroscope features")
+                gyro_features['gyro_skew_win70']=gyro_skew_win70
+                gyro_features['gyro_skew_win30']=gyro_skew_win30
+                gyro_features['gyro_indMax_win60']=gyro_maxindex_win60
+                gyro_features['gyro_SMA_win80']=gyro_SMA_win80
+                gyro_features['gyro_var_win20']=gyro_var_win20
+                gyro_features['gyro_Max_win70']=gyro_maxvalue_win70
+                gyro_features['gyro_valley_prominences80']=gyro_valleyprom_win80
+                gyro_features['gyro_max_freq_val']=gyro_maxfreqvalue
+                self.gyro_features=gyro_features
+            s=s+1
+        
+        
+    def detect_steps_SmartStep(self):
+
+        joblib_file = "d:\\Users\\al-abiad\\Desktop\\experiments\\treadmill\\machine_learning_features\\joblib_Model_accv3.pkl" 
+        Model_acc = joblib.load(joblib_file)
+        joblib_file = "d:\\Users\\al-abiad\\Desktop\\experiments\\treadmill\\machine_learning_features\\joblib_Model_gyrov3.pkl" 
+        Model_gyro = joblib.load(joblib_file)
+        steps_in_window=[]
+        maxprobacc=0.5
+        maxprobgyro=0.5
+        index=0
+        while index< len(self.gyro_features):
+        # for index, window in X_test.iterrows():
+            featgyro=self.gyro_features.iloc[index,:]
+            featacc=self.acc_features.iloc[index,:]
+
+            y_predprobacc= Model_acc.predict_proba([featacc])
+            y_predprobgyro= Model_gyro.predict_proba([featgyro])
+
+            if (y_predprobgyro[0][1]>maxprobgyro):
+                steps_in_window.append(1)
+                print("Model is gyro")
+                index=index+1
+                distance=0
+                while distance<80 and index<len(self.gyro_features):
+                    
+                    featgyro=self.gyro_features.iloc[index,:]
+                    y_predprobgyro= Model_gyro.predict_proba([featgyro])
+                    
+                    if(y_predprobgyro[0][1]>maxprobgyro):
+                        print("step is gyro")
+                        steps_in_window.append(1)
+                        distance=0
+                    else:
+                        distance=distance+1
+                        steps_in_window.append(0)
+                    index=index+1
+                    
+                print("we entered condition")
+                index=index-50
+                steps_in_window=steps_in_window[:-50]
+                        
+            elif (y_predprobacc[0][1]>maxprobacc):
+                steps_in_window.append(1)
+                print("Model is acc")
+                index=index+1
+                distance=0
+                while distance<80 and index<len(self.acc_features):
+                    featacc=self.acc_features.iloc[index,:]
+                    y_predprobacc= Model_acc.predict_proba([featacc])
+                    
+                    if(y_predprobacc[0][1]>maxprobacc):
+                        print("step is acc")
+                        steps_in_window.append(1)
+                        distance=0
+                    else:
+                        distance=distance+1
+                        steps_in_window.append(0)
+                    index=index+1
+                
+                print("we entered condition")
+                index=index-50
+                steps_in_window=steps_in_window[:-50]
+        
+            else:
+                steps_in_window.append(0)
+                print("irregular or static")
+                index=index+1
+                
+                
+        self.steps_smartstep=self.inverse_window_step(steps_in_window)
+                
+    def inverse_window_step(self,windows):
+        steps=[]
+        ii=0
+        for wind in windows:
+    
+            if wind==1:
+                steps.append(64+ii)
+            ii=ii+1
+        return steps
+
 
 
         
