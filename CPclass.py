@@ -700,51 +700,6 @@ class phone(object):
                 
         return(walkingperiodsacc,walkingperiodsgyro)
 
-        
-#    def detect_turns(self):
-        
-            
-        
-        
-        
-    # def save_phases(self,matlab=False,pickle=False,csv=True):#,left_HS,right_HS):
-    #     """
-    #     save the three cropped phases data files after preprocessing 
-    #     :param bool pickle: save as pickle object
-    #     :param bool matlab: save as matlab variable
-    #     :param bool csv: save as csv file (default)
-    #     """
-    #     if pickle:
-    #         with open('acc_hand.pickle','wb') as f:
-    #             pickle.dump(self.acc_hand,f)
-    #         with open('acc_waist.pickle','wb') as f:
-    #             pickle.dump(self.acc_waist,f)
-    #         with open('acc_pocket.pickle','wb') as f:
-    #             pickle.dump(self.acc_pocket,f)
-    #         with open('gyro_hand.pickle','wb') as f:
-    #             pickle.dump(self.gyro_hand,f)
-    #         with open('gyro_waist.pickle','wb') as f:
-    #             pickle.dump(self.gyro_waist,f)
-    #         with open('gyro_pocket.pickle','wb') as f:
-    #             pickle.dump(self.gyro_pocket,f)
-    #     if matlab:
-    #         sio.savemat('acc_hand.mat', {'acc_hand':self.acc_hand})
-    #         sio.savemat('acc_waist.mat', {'acc_waist':self.acc_waist})
-    #         sio.savemat('acc_pocket.mat', {'acc_pocket':self.acc_pocket})
-    #         sio.savemat('gyro_hand.mat', {'gyro_hand':self.gyro_hand})
-    #         sio.savemat('gyro_waist.mat', {'gyro_waist':self.gyro_waist})
-    #         sio.savemat('gyro_pocket.mat', {'gyro_pocket':self.gyro_pocket})
-    #     if csv:
-    #         self.acc_hand.to_csv('acc_hand.csv',index=True)
-    #         self.acc_waist.to_csv('acc_waist.csv',index=True)
-    #         self.acc_pocket.to_csv('acc_pocket.csv',index=True)
-    #         self.gyro_hand.to_csv('gyro_hand.csv',index=True)
-    #         self.gyro_waist.to_csv('gyro_waist.csv',index=True)
-    #         self.gyro_pocket.to_csv('gyro_pocket.csv',index=True)
-            
-#            left_HS.to_csv('left_HS.csv',index=True)
-#            right_HS.to_csv('right_HS.csv',index=True)
-
 
     def manual_crop(self,ind_start=0,ind_stop=0):
         print("croping")
@@ -754,6 +709,7 @@ class phone(object):
             
         self.acc_interp=self.acc_interp.iloc[ind_start:ind_stop,:].copy()
         self.gyro_interp=self.gyro_interp.iloc[ind_start:ind_stop,:].copy()
+        
         
             
     def save_file(self):
@@ -909,7 +865,7 @@ class phone(object):
         
         return()
         
-    def computeVarStride(self,fs=100,remove_outliers=True,N=1,use_smartstep=False,use_peaks=True,pocket=True,remove_step=0,round_data=True):
+    def computeVarStride(self,fs=100,remove_outliers=True,N=1,use_smartstep=False,manual_peaks=[],use_peaks=True,pocket=True,remove_step=0,round_data=True):
         """
         compute stride time 
         :param int fs: sampling frequency
@@ -921,7 +877,7 @@ class phone(object):
         #note: we remove two steps from beginging and end
         cycle_tempparam = {}
         if use_smartstep:
-            peaks=self.steps_smartstep
+            peaks=manual_peaks
         else:
             if use_peaks:
                 peaks=np.array(self.peakandvalley['peak_index'])
@@ -1227,7 +1183,7 @@ class phone(object):
                     i=i+N_wf//4
             i=i+N_wf
             
-        startp=startp/100
+        # startp=startp/100
         
         return(startp)
         
@@ -1727,9 +1683,8 @@ class phone(object):
         
         self.norma_threeD_acc=normalize_threeD_acc
         self.norma_threeD_gyro=normalize_threeD_gyro
-    
         
-    
+        
     def findMiddle(self,input_list):
         middle = float(len(input_list))/2
         if middle % 2 != 0:
@@ -1764,7 +1719,7 @@ class phone(object):
         return sum(absolute)
     
     def _dominant_frequency(self,signal_x, sampling_rate=100):
-
+    
         signal_x = signal_x-np.mean(signal_x)
         dim = signal_x.shape
         
@@ -1842,30 +1797,9 @@ class phone(object):
         domfreq[0,2]=freq[idx] #Third dominant freq
     
         return max_freq,max_freq_val,dom_freq_ratio,spectral_flatness[0].real,spectral_entropy_estimate[0].real,domfreq
-            
-    
-    def calculate_hand_features(self):
+     
+    def calculate_features(self,signals,signals_unfiltered):
 
-        self.calculate_norm_accandgyro(gyro=self.gyro_interp,
-                                       acc=self.acc_interp)
-        
-        acc_mag_unfiltered=self.acc_magnitude
-        gyro_mag_unfiltered=self.gyro_magnitude
-        
-        plt.figure()
-        plt.plot(acc_mag_unfiltered)
-        plt.plot(gyro_mag_unfiltered)
-        
-        self.filter_data(gyro=self.gyro_interp,acc=self.acc_interp,N=10,fc=2,fs=100)
-        
-        self.calculate_norm_accandgyro(gyro=self.gyro_filtered,acc=self.acc_filtered)
-
-        acc_mag_filtered=self.acc_magnitude
-        gyro_mag_filtered=self.gyro_magnitude
-        
-        plt.plot(acc_mag_filtered)
-        plt.plot(gyro_mag_filtered)
-        
         window_size80= 80
         window_size5= 5
         window_size30= 30
@@ -1875,17 +1809,17 @@ class phone(object):
         window_size70= 70
         window_slide_step=1
         window_freq=128
-        
+    
         acc_features=pd.DataFrame()
         gyro_features=pd.DataFrame()
-
+    
         s=0
-
-        
-        signals=[acc_mag_filtered,gyro_mag_filtered]
-        
-        signals_unfiltered=[acc_mag_unfiltered,gyro_mag_unfiltered]
-
+    
+    
+        # signals=[acc_mag_filtered,gyro_mag_filtered]
+    
+        # signals_unfiltered=[acc_mag_unfiltered,gyro_mag_unfiltered]
+    
         ########Feature Calculation#######
         for sig in signals:
             print("calculating both signals")
@@ -1897,7 +1831,7 @@ class phone(object):
             acc_peakprom_win50=[]
             acc_domfreq1=[]
             acc_kurt_win30=[]
-            
+    
             gyro_maxindex_win60=[]
             gyro_skew_win70=[]
             gyro_skew_win30=[]
@@ -1907,43 +1841,45 @@ class phone(object):
             gyro_maxvalue_win70=[]
             gyro_valleyprom_win80=[]
     
-            
+    
             for i in range(window_freq//2,len(sig)-window_freq//2,window_slide_step):
-                
+    
                 mag30=sig[i-(window_size30//2):i+1+(window_size30//2)]
                 mag30_nomean=mag30-np.mean(mag30)
-                
+    
                 mag5=sig[i-(window_size5//2):i+1+(window_size5//2)]
-
-                
+    
+    
                 mag80=sig[i-(window_size80//2):i+1+(window_size80//2)]
                 mag80_nomean=mag80-np.mean(mag80)
-                
+    
                 mag50=sig[i-(window_size50//2):i+1+(window_size50//2)]
                 mag50_nomean=mag50-np.mean(mag50)
-                
+    
                 mag60=sig[i-(window_size60//2):i+1+(window_size60//2)]
-
-                
+    
+    
                 mag70=sig[i-(window_size70//2):i+1+(window_size70//2)]
-
-                
+    
+    
                 mag20=sig[i-(window_size20//2):i+1+(window_size20//2)]
                 mag20_nomean=mag20-np.mean(mag20)
-                
-                
+    
+    
                 mag_freq=signals_unfiltered[s][i-window_freq//2:i+(window_freq//2)+1]
-                
-
+    
+    
                 #===============================================
     
                 if s==0:
-                    print("calculating acceleration")
+    #                 print("calculating acceleration")
+    
                     acc_minindex_win30.append(self.calc_index_min(mag30_nomean))
+    
                     acc_skew_win5.append(stats.skew(mag5))
                     acc_median_win80.append(np.median(mag80))
                     acc_kurt_win30.append(stats.kurtosis(mag30))
-                    
+    
                     peak_index,peak_properties= find_peaks(mag80_nomean,prominence=(None,None)) 
                     if peak_index.size>0:
                         ind_mid=self.findMiddle(peak_index)
@@ -1957,23 +1893,23 @@ class phone(object):
                         acc_peakprom_win50.append(peak_properties["prominences"][ind_mid])
                     else:
                         acc_peakprom_win50.append(50)
-                        
+    
                     valley_index,valley_properties= find_peaks(-mag80_nomean,prominence=(None,None))
                     if valley_index.size>0:
                         ind_mid=self.findMiddle(valley_index)
                         acc_valleyprom_win80.append(valley_properties["prominences"][ind_mid])
                     else:
                         acc_valleyprom_win80.append(50)
-                        
+    
                     _,_,_,_,_,domfreq=self._dominant_frequency(mag_freq)
     
     
                     acc_domfreq1.append(domfreq[0,0])
     
-                    
-                
+    
+    
                 if s==1:
-                    print("calculating gyroscope")
+    #                 print("gyro")
                     gyro_skew_win70.append(stats.skew(mag70))
                     gyro_skew_win30.append(stats.skew(mag30))
                     gyro_maxindex_win60.append(self.calc_index_max(mag60))
@@ -1981,17 +1917,17 @@ class phone(object):
                     gyro_var_win20.append(np.var(mag20_nomean))
                     gyro_maxvalue_win70.append(np.amax(mag70))
                     valley_index,valley_properties= find_peaks(-mag80_nomean,prominence=(None,None))
-                
+    
                     if valley_index.size>0:
                         ind_mid=self.findMiddle(valley_index)
                         gyro_valleyprom_win80.append(valley_properties["prominences"][ind_mid])
                     else:
                         gyro_valleyprom_win80.append(50)
-                        
+    
                     _,max_fr_val,_,_,_,_=self._dominant_frequency(mag_freq)
     
                     gyro_maxfreqvalue.append(max_fr_val)
-                    
+    
             if s==0: 
                 print("acceleration features")
                 acc_features['acc_indMin_win30']=acc_minindex_win30
@@ -2002,7 +1938,7 @@ class phone(object):
                 acc_features['acc_valley_prominences80']=acc_valleyprom_win80
                 acc_features['acc_domfreq1']=acc_domfreq1
                 acc_features['acc_kurt_win30']=acc_kurt_win30
-                self.acc_features=acc_features
+                acc_features=acc_features
     
             if s==1:
                 print("gyroscope features")
@@ -2014,12 +1950,27 @@ class phone(object):
                 gyro_features['gyro_Max_win70']=gyro_maxvalue_win70
                 gyro_features['gyro_valley_prominences80']=gyro_valleyprom_win80
                 gyro_features['gyro_max_freq_val']=gyro_maxfreqvalue
-                self.gyro_features=gyro_features
+                gyro_features=gyro_features
             s=s+1
+            
+        return gyro_features,acc_features
         
-        
-    def detect_steps_SmartStep(self):
+    def predict_steps(self,gyro_features,acc_features):
 
+        feat_gyro=['gyro_indMax_win60',
+         'gyro_skew_win70',
+         'gyro_max_freq_val',
+         'gyro_SMA_win80',
+         'gyro_skew_win30',
+         'gyro_var_win20',
+         'gyro_Max_win70',
+         'gyro_valley_prominences80']
+    
+        feat_acc=['acc_indMin_win30', 'acc_skew_win5', 'acc_Median_win80',
+                'acc_kurt_win30',
+               'acc_valley_prominences80', 'acc_peak_prominences80',
+               'acc_peak_prominences50',  'acc_domfreq1']
+    
         joblib_file = "d:\\Users\\al-abiad\\Desktop\\experiments\\treadmill\\machine_learning_features\\joblib_Model_accv3.pkl" 
         Model_acc = joblib.load(joblib_file)
         joblib_file = "d:\\Users\\al-abiad\\Desktop\\experiments\\treadmill\\machine_learning_features\\joblib_Model_gyrov3.pkl" 
@@ -2028,67 +1979,85 @@ class phone(object):
         maxprobacc=0.5
         maxprobgyro=0.5
         index=0
-        while index< len(self.gyro_features):
-        # for index, window in X_test.iterrows():
-            featgyro=self.gyro_features.iloc[index,:]
-            featacc=self.acc_features.iloc[index,:]
+        steps_in_window=[]
+        step_type=[]
+        maxprobacc=0.5
+        maxprobgyro=0.5
 
+        index=0
+        while index< len(gyro_features):
+    
+    
+            featgyro=gyro_features.iloc[index,:][feat_gyro]
+            featacc=acc_features.iloc[index,:][feat_acc]
+    
+    
+    
             y_predprobacc= Model_acc.predict_proba([featacc])
+    
             y_predprobgyro= Model_gyro.predict_proba([featgyro])
-
+    
             if (y_predprobgyro[0][1]>maxprobgyro):
                 steps_in_window.append(1)
+                step_type.append("gyro")
                 print("Model is gyro")
                 index=index+1
                 distance=0
-                while distance<80 and index<len(self.gyro_features):
-                    
-                    featgyro=self.gyro_features.iloc[index,:]
+                while distance<80 and index<len(gyro_features):
+                    print("entered loop")
+                    featgyro=gyro_features.iloc[index,:][feat_gyro]
                     y_predprobgyro= Model_gyro.predict_proba([featgyro])
-                    
+    
                     if(y_predprobgyro[0][1]>maxprobgyro):
                         print("step is gyro")
                         steps_in_window.append(1)
+                        step_type.append("gyro")
                         distance=0
                     else:
                         distance=distance+1
                         steps_in_window.append(0)
                     index=index+1
-                    
-                print("we entered condition")
-                index=index-50
-                steps_in_window=steps_in_window[:-50]
-                        
+    
+                if index<len(gyro_features):
+                    print("we entered condition")
+                    index=index-50
+                    steps_in_window=steps_in_window[:-50]
+    
+    
             elif (y_predprobacc[0][1]>maxprobacc):
                 steps_in_window.append(1)
+                step_type.append("acc")
                 print("Model is acc")
                 index=index+1
                 distance=0
-                while distance<80 and index<len(self.acc_features):
-                    featacc=self.acc_features.iloc[index,:]
+                print(index)
+                while distance<80 and index<len(gyro_features):
+                    featacc=acc_features.iloc[index,:][feat_acc]
                     y_predprobacc= Model_acc.predict_proba([featacc])
-                    
+                    print(index)
                     if(y_predprobacc[0][1]>maxprobacc):
                         print("step is acc")
                         steps_in_window.append(1)
+                        step_type.append("acc")
                         distance=0
                     else:
                         distance=distance+1
                         steps_in_window.append(0)
                     index=index+1
-                
-                print("we entered condition")
-                index=index-50
-                steps_in_window=steps_in_window[:-50]
-        
+    
+                if index<len(gyro_features):
+                    print("we entered condition")
+                    index=index-50
+                    steps_in_window=steps_in_window[:-50]
+    
+    
             else:
                 steps_in_window.append(0)
                 print("irregular or static")
                 index=index+1
                 
-                
-        self.steps_smartstep=self.inverse_window_step(steps_in_window)
-                
+        return(steps_in_window,step_type)
+    
     def inverse_window_step(self,windows):
         steps=[]
         ii=0
@@ -2098,10 +2067,12 @@ class phone(object):
                 steps.append(64+ii)
             ii=ii+1
         return steps
-
-
+    
 
         
+        
+            
+                
         
 if __name__=="__main__":
     plt.close('all')
