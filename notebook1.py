@@ -39,6 +39,7 @@ import nolds as nld
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 pickable_artists1 = []
 pickable_artists2 = []
+pickable_artists3=[]
 
 class MyApplication:
     
@@ -94,11 +95,13 @@ class MyApplication:
         #get entries
         self.ent_str_walk = self.builder.get_object('str_walk')
         self.ent_stp_walk = self.builder.get_object('stp_walk')
+        
         self.ent_turn = self.builder.get_object('step_turn')
         self.ent_embdim = self.builder.get_object('ent_embdim')
         self.ent_timedelay = self.builder.get_object('ent_timedelay')
         self.ent_Nbstridelyap = self.builder.get_object('ent_Nbstridelyap')
         self.ent_turntime=self.builder.get_object('ent_turntime')
+        
         self.ent_str_gaitup_feet=self.builder.get_object('str_gaitup_feet')
         self.ent_str_phone_waist=self.builder.get_object('str_phone_waist')
         self.ent_str_gaitup_hand=self.builder.get_object('str_gaitup_hand')
@@ -129,6 +132,7 @@ class MyApplication:
         
         #radio
         self.var_turn= self.builder.get_variable('var_turn')
+        self.var_stepdetectionmethod= self.builder.get_variable('var_step_method')
 
         
 
@@ -140,7 +144,13 @@ class MyApplication:
 
         
     def on_click_canvas(self,event,mode="detect_turns"):
-        mode="detect_turns"
+        
+        if self.left_excel or self.right_excel:
+            mode="detect_turns"
+        else:
+            mode="detect_peaks"
+            
+        
 
 #        print('-----')
 #        print('button:', event.button)
@@ -175,7 +185,33 @@ class MyApplication:
                 #     self.canvas.draw()
                 # else:
                 #     print ('Clicked ouside axes bounds but inside plot window')
+            if mode=="detect_peaks":
+                print("detecting walking period")
+                if event.inaxes is not None and not hasattr(event, 'already_picked'):
+                    remove3 = [artist for artist in pickable_artists3 if artist.contains(event)[0]]
+                    print("--remove1--")
+                    print(remove3)
+                    print("---pickable_artists---")
+                    print(pickable_artists3)
+                    x=event.xdata.astype('int')
+                    
+                    if not remove3:
+                        # add a pt
+                        pt3 = self.a.scatter(x, 10,color='red',marker="|",s=10000000000,zorder=2,picker=5)
+                        pickable_artists3.append(pt3)
+                        self.turn_peak_ind=np.append(self.turn_peak_ind,x)
+                        # self.refresh_treeview()
+                    else:
+                        self.turn_peak_ind=[i for i in self.turn_peak_ind if i>x+100 or i<x-100]
+                        # self.refresh_treeview()
+                        pickable_artists3.remove(remove3[0])
+                        for artist in remove3:
+                            artist.remove()
+                    self.canvas.draw()
+                else:
+                    print ('Clicked ouside axes bounds but inside plot window')
                 
+            
             elif mode=="detect_turns":
                 print("detect_turns")
                 print(self.var_turn.get())
@@ -238,22 +274,35 @@ class MyApplication:
             
     def Refresh_treeview(self,event=None):
         print("refreshing...")
-        turn=int(self.ent_turn.get())
-        stop_turn=np.sort(self.turn_stop_ind)
-        start_turn=np.sort(self.turn_start_ind)
+        if self.left_excel or self.right_excel:
+            mode="detect_turns"
+        else:
+            mode="detect_peaks"
         
-        if len(self.turn_stop_ind)!=len(self.turn_stop_ind):
-            print("maybe you will face a problem in table")
-            length=np.minimum(len(start_turn),len(stop_turn))
+        if mode=="detect_turns":
+            turn=int(self.ent_turn.get())
+            stop_turn=np.sort(self.turn_stop_ind)
+            start_turn=np.sort(self.turn_start_ind)
             
-        length=np.minimum(len(start_turn),len(stop_turn))   
-        self.phase=[]
-           
-        
-        for i in range(0,length-1):
-            self.phase.append((i+1,stop_turn[i],start_turn[i],0))
-                 
-    
+            if len(self.turn_stop_ind)!=len(self.turn_stop_ind):
+                print("maybe you will face a problem in table")
+                length=np.minimum(len(start_turn),len(stop_turn))
+                
+            length=np.minimum(len(start_turn),len(stop_turn))   
+            self.phase=[]
+               
+            
+            for i in range(0,length-1):
+                self.phase.append((i+1,stop_turn[i],start_turn[i],0))
+                
+        elif mode=="detect_peaks":
+            turn=int(self.ent_turn.get())
+            self.turn_peak_ind.sort()
+            self.phase=[]
+            length=len(self.turn_peak_ind)  
+            for i in range(0,length-1):
+                self.phase.append((i+1,self.turn_peak_ind[i],self.turn_peak_ind[i+1],turn))
+
             
         if (len(self.treeview.get_children())!=0):
             self.treeview.delete(*self.treeview.get_children())
@@ -313,15 +362,23 @@ class MyApplication:
     #     self.btn_detect_turn["state"] = "normal"
         
     def Detect_turns(self,method="gyro_peak",event=None):
-        method="extract gaitup"
+        if self.left_excel or self.right_excel:
+            method="extract gaitup"
+        else:
+            method=="gyro_peak"
         if method=="gyro_peak":
             self.phase=[]
-            str_walk=int(float(self.ent_str_walk.get()))*100
-            stp_walk=int(self.ent_stp_walk.get())*100
+            str_walk=0
+            
+            s_w=int((self.ent_str_phone_waist.get()))
+            
+            stop_phone=int((self.ent_stp_walk.get()))-s_w
+            stp_walk=stop_phone
+            
             turn=int(self.ent_turn.get())
             
-            self.CP_data.peakdet_m2(acc=False,plot_peak=True,detect_turn=True)
-            self.peaks=self.CP_data.peakandvalley["peak_index"]
+            self.CP_data_phone.peakdet_m2(acc=False,plot_peak=True,detect_turn=True)
+            self.peaks=self.CP_data_phone.peakandvalley["peak_index"]
     
             self.peaks=self.peaks[self.peaks>str_walk]
             self.peaks=self.peaks[self.peaks<stp_walk]
@@ -343,13 +400,15 @@ class MyApplication:
             
             print(len(self.treeview.get_children()))
             
-            # for p in self.phase:
-            #     pt = self.a.scatter(p[1], 10,color='red',marker="|",s=10000000000,zorder=2,picker=5)
-            #     pickable_artists.append(pt)
+            for p in self.phase:
+                pt = self.a.scatter(p[1], 10,color='red',marker="|",s=10000000000,zorder=2,picker=5)
+                pickable_artists3.append(pt)
                 
-            #     pt = self.a.scatter(p[2], 10,color='red',marker="|",s=10000000000,zorder=2,picker=5)
-            #     pickable_artists.append(pt)
-                
+                pt = self.a.scatter(p[2], 10,color='red',marker="|",s=10000000000,zorder=2,picker=5)
+                pickable_artists3.append(pt)
+            
+            self.turn_peak_ind=self.peaks2
+            
             self.canvas.draw()
         elif method=="extract gaitup":
             print("extracting from gaitup")
@@ -387,7 +446,7 @@ class MyApplication:
                 pickable_artists1.append(pt1)
                 
                 
-            
+            self.btn_detect_step["state"] = "normal"
             phases=np.vstack(self.phase)
             self.canvas.draw()
             self.turn_stop_ind=phases[:,1]
@@ -463,7 +522,8 @@ class MyApplication:
 
             self.a.plot(turn_array, color='red',alpha=0.5)
             self.b.plot(turn_array/5, color='red',alpha=0.5)
-            self.c.plot(turn_array/5, color='red',alpha=0.5)
+            if self.rightfoot or self.leftfoot:
+                self.c.plot(turn_array/5, color='red',alpha=0.5)
             if self.hand:
                 self.d.plot(turn_array, color='red',alpha=0.5)
 
@@ -519,11 +579,7 @@ class MyApplication:
         gaps = [[s, e] for s, e in zip(nums, nums[1:]) if s+d < e]
         edges = iter(nums[:1] + sum(gaps, []) + nums[-1:])
         return list(zip(edges, edges))
-                
-            
-        
 
-        
         
     def Detect_steps(self,event=None):
         phases_adj=[]
@@ -558,55 +614,69 @@ class MyApplication:
         cum_ind=0     
         for i in range(0,len(accc)):
             
-            self.CP_data_phone.calculate_norm_accandgyro(gyro=gyroo[i],
-                                                         acc=accc[i])
+            if self.var_stepdetectionmethod.get()=="Use_smartstep":
+                print("using smartstep")
             
-            signals_unfiltered=[self.CP_data_phone.acc_magnitude,
-                                self.CP_data_phone.gyro_magnitude]
-            
-            self.CP_data_phone.filter_data(acc=accc[i],gyro=gyroo[i],
-                                           N=10,fc=2,fs=100)
-            
-            self.CP_data_phone.calculate_norm_accandgyro(gyro=self.CP_data_phone.gyro_filtered,
-                                                         acc=self.CP_data_phone.acc_filtered)
-            
-            signals=[self.CP_data_phone.acc_magnitude,
-                                self.CP_data_phone.gyro_magnitude]
-            
-            gyro_features,acc_features=self.CP_data_phone.calculate_features(signals,signals_unfiltered)
-            
-            
-            steps_in_window,step_type=self.CP_data_phone.predict_steps(gyro_features,acc_features)
-            
-            steps_smartstep=self.CP_data_phone.inverse_window_step(steps_in_window)
-            
-            steps_smartstep=np.array(steps_smartstep)
-            # self.CP_data_phone.peakdet_m2(acc=True,plot_peak=False,detect_turn=False)
+                self.CP_data_phone.calculate_norm_accandgyro(gyro=gyroo[i],acc=accc[i])
+                
+                signals_unfiltered=[self.CP_data_phone.acc_magnitude,self.CP_data_phone.gyro_magnitude]
+                
+                self.CP_data_phone.filter_data(acc=accc[i],gyro=gyroo[i],N=10,fc=2,fs=100)
+                
+                self.CP_data_phone.calculate_norm_accandgyro(gyro=self.CP_data_phone.gyro_filtered,acc=self.CP_data_phone.acc_filtered)
+                
+                signals=[self.CP_data_phone.acc_magnitude,self.CP_data_phone.gyro_magnitude]
+                
+                gyro_features,acc_features=self.CP_data_phone.calculate_features(signals,signals_unfiltered)
+        
+                
+                steps_in_window,step_type=self.CP_data_phone.predict_steps(gyro_features,acc_features)
+                
+                steps_smartstep=self.CP_data_phone.inverse_window_step(steps_in_window)
+                
+                steps_smartstep=np.array(steps_smartstep)
+                
+                cum_ind=phases_adj[i][0]
+                peaks=steps_smartstep+cum_ind
 
-            #remove 2 steps from beginging and end 
-            # peaks=self.CP_data_phone.peakandvalley["peak_index"]+cum_ind
-            cum_ind=phases_adj[i][0]
-            
-            peaks=steps_smartstep+cum_ind
-            
-            
-            if (len(steps_smartstep)>3):
+            if self.var_stepdetectionmethod.get()=="Use_peak_detection": 
+                
+                print("using step_detection")
+                
+                self.CP_data_phone.filter_data(acc=accc[i],gyro=gyroo[i],N=10,fc=3,fs=100)
+                self.CP_data_phone.calculate_norm_accandgyro(gyro=self.CP_data_phone.gyro_filtered,acc=self.CP_data_phone.acc_filtered)
+                
+                self.CP_data_phone.peakdet_m2(acc=True,plot_peak=False,detect_turn=False)
+                
+                peaks=self.CP_data_phone.peakandvalley["peak_index"]
+                
+                peaks=np.array(peaks)
+                
+                cum_ind=phases_adj[i][0]
+                peaks=peaks+cum_ind
+
+            if (len(peaks)>5):
+                print(len(peaks))
 
                 tot_peaks.append(peaks)
                 self.CP_data_phone.computeVarStride(fs=100,remove_outliers=True,N=3,use_smartstep=True,manual_peaks=peaks,use_peaks=True,
                                               pocket=False,remove_step=turn_strides[i])
             
                 result=self.CP_data_phone.cycle_temp
-                
-                result_adj=[]
-                for k in range(0,len(self.CP_data_phone.cycle_temp['stridetime'])):
-                    result_adj.append((i,k+1,self.CP_data_phone.cycle_temp['stridetime'][k][0]))
-                    
-                for d in result_adj:
-                    self.treeview_res.insert('', tk.END, values=d)
-                 
-                d=((i,np.around(np.mean(self.CP_data_phone.cycle_temp['stridetime']),decimals=3),self.CP_data_phone.cycle_temp['stridetime_std'],self.CP_data_phone.cycle_temp['stridetime_Cov'],len(result["stridetime"])))   
-                self.treeview_stat.insert('',tk.END,values=d)
+                try:
+                    if len(self.CP_data_phone.cycle_temp['stridetime'])>5:
+                        result_adj=[]
+                        for k in range(0,len(self.CP_data_phone.cycle_temp['stridetime'])):
+                            result_adj.append((i,k+1,self.CP_data_phone.cycle_temp['stridetime'][k][0]))
+                            
+                        for d in result_adj:
+                            self.treeview_res.insert('', tk.END, values=d)
+                         
+                        d=((i,np.around(np.mean(self.CP_data_phone.cycle_temp['stridetime']),decimals=3),self.CP_data_phone.cycle_temp['stridetime_std'],self.CP_data_phone.cycle_temp['stridetime_Cov'],len(result["stridetime"])))   
+                        self.treeview_stat.insert('',tk.END,values=d)
+                except Exception as e:
+                    print (repr(e))
+                    print("no calculation of stride time for this segment")
             else:
                 print("no steps occured in this walking period")
             
@@ -645,8 +715,26 @@ class MyApplication:
                
     def plot_and_calculate_start(self,event=None):
         print("doing")
+        
         self.read_gaitup_phone_csv()
+        
+        # if self.leftfoot and self.rightfoot:    
+        #     #start of walking in foot signal is the minimum from right and left
+        #     if self.right_excel:
+        #         s_rf=int((self.start_excel_right)*10000//128)
+        #         s_f=s_rf
+        #     if self.left_excel:
+        #         s_lf=int((self.start_excel_left)*10000//128)
+        #         s_f=s_lf
+        #     if self.right_excel and self.left_excel:
+        #         s_f=np.minimum(s_rf,s_lf)
+
+        #     print(s_f)
+        #     self.ent_str_gaitup_feet.delete(0,tk.END)
+        #     self.ent_str_gaitup_feet.insert(0,s_f)
+        
         self.plot_gaitup_phone()
+        
         
         
     def read_gaitup_phone_csv(self):
@@ -662,6 +750,8 @@ class MyApplication:
         """
         gaitup_dir=os.path.join(self.path,"Gaitup" )
         self.hand=True
+        self.leftfoot=True
+        self.rightfoot=True
         #hand norm
         filename=os.path.join(gaitup_dir,"hand.csv" )
         col_list = ["Time", "Gyro X","Gyro Y","Gyro Z","Accel X", "Accel Y","Accel Z"]
@@ -671,6 +761,8 @@ class MyApplication:
         except:
             self.hand=False
             print("no hand file")
+            
+
             
         if self.hand:
             df_h = df_h.iloc[1:]
@@ -711,76 +803,100 @@ class MyApplication:
         
         #--read left foot csv--#
         filename=os.path.join(gaitup_dir,"left_foot.csv" ) 
-
-        col_list = ["Time", "Gyro X","Gyro Y","Gyro Z","Accel X", "Accel Y","Accel Z"]
-        df_lf=pd.read_csv(filename, delimiter=",",skiprows=[0],usecols=col_list)
-        df_lf = df_lf.iloc[1:]
-        df_lf=df_lf.astype('float32')
         
-        self.df_lf=df_lf
-        time=self.df_lf['Time'].values
-        #interpolate and filter
-        self.df_lf=self.df_lf.set_index('Time')
-        fs=100
-        t_t=np.linspace(0, time[-1], num=np.int(time[-1]*fs), 
-                        endpoint=True,dtype=np.float32)
+        try:
+            col_list = ["Time", "Gyro X","Gyro Y","Gyro Z","Accel X", "Accel Y","Accel Z"]
+            df_lf=pd.read_csv(filename, delimiter=",",skiprows=[0],usecols=col_list)
 
-        self.df_lf=self.df_lf.reindex(self.df_lf.index.union(t_t))
-        self.df_lf=self.df_lf.interpolate(method='linear', limit_direction='both',
-                                        axis=0)
-        self.df_lf=self.df_lf[self.df_lf.index.isin(pd.Index(t_t))]
-
-        self.df_lf.index=np.around(self.df_lf.index.astype('float32'),decimals=4)
-
-        time =self.df_lf.index
+        except:
+            self.leftfoot=False
+            print("no leftfoot file")
         
-        acc_lf=self.df_lf.iloc[:,3:6]
-        gyro_lf=self.df_lf.iloc[:,0:3]
-        
-        #--create cp object from csv of foot--#
-        self.CP_data_lf=CP(acc=acc_lf,gyro=gyro_lf,app="manual_entry")
-        self.CP_data_lf.calculate_norm_accandgyro(gyro=self.CP_data_lf.gyro_interp,acc=self.CP_data_lf.acc_interp)
-        self.acc_lf_magnitude=self.CP_data_lf.acc_magnitude
-        self.gyro_lf_magnitude=self.CP_data_lf.gyro_magnitude
-        s_lf=self.CP_data_lf.detectstartofwalk(sig1=self.CP_data_lf.acc_magnitude,thresh=5)
+        if self.leftfoot:
+            df_lf = df_lf.iloc[1:]
+            df_lf=df_lf.astype('float32')
+            
+            self.df_lf=df_lf
+            time=self.df_lf['Time'].values
+            #interpolate and filter
+            self.df_lf=self.df_lf.set_index('Time')
+            fs=100
+            t_t=np.linspace(0, time[-1], num=np.int(time[-1]*fs), 
+                            endpoint=True,dtype=np.float32)
+    
+            self.df_lf=self.df_lf.reindex(self.df_lf.index.union(t_t))
+            self.df_lf=self.df_lf.interpolate(method='linear', limit_direction='both',
+                                            axis=0)
+            self.df_lf=self.df_lf[self.df_lf.index.isin(pd.Index(t_t))]
+    
+            self.df_lf.index=np.around(self.df_lf.index.astype('float32'),decimals=4)
+    
+            time =self.df_lf.index
+            
+            acc_lf=self.df_lf.iloc[:,3:6]
+            gyro_lf=self.df_lf.iloc[:,0:3]
+            
+            #--create cp object from csv of foot--#
+            self.CP_data_lf=CP(acc=acc_lf,gyro=gyro_lf,app="manual_entry")
+            self.CP_data_lf.calculate_norm_accandgyro(gyro=self.CP_data_lf.gyro_interp,acc=self.CP_data_lf.acc_interp)
+            self.acc_lf_magnitude=self.CP_data_lf.acc_magnitude
+            self.gyro_lf_magnitude=self.CP_data_lf.gyro_magnitude
+            s_lf=self.CP_data_lf.detectstartofwalk(sig1=self.CP_data_lf.acc_magnitude,thresh=5)
+            s_f=s_lf
         #--read right foot csv--#
         filename=os.path.join(gaitup_dir,"right_foot.csv" )
-        #right foot
-        col_list = ["Time", "Gyro X","Gyro Y","Gyro Z","Accel X", "Accel Y","Accel Z"]
-        df_rf=pd.read_csv(filename, delimiter=",",skiprows=[0],usecols=col_list)
-        df_rf = df_rf.iloc[1:]
-        df_rf=df_rf.astype('float32')
         
-        self.df_rf=df_rf
-        time=self.df_rf['Time'].values
-        #interpolate and filter
-        self.df_rf=self.df_rf.set_index('Time')
-        fs=100
-        t_t=np.linspace(0, time[-1], num=np.int(time[-1]*fs), 
-                        endpoint=True,dtype=np.float32)
+        try:
+            col_list = ["Time", "Gyro X","Gyro Y","Gyro Z","Accel X", "Accel Y","Accel Z"]
+            df_rf=pd.read_csv(filename, delimiter=",",skiprows=[0],usecols=col_list)
 
-        self.df_rf=self.df_rf.reindex(self.df_rf.index.union(t_t))
-        self.df_rf=self.df_rf.interpolate(method='linear', limit_direction='both',
-                                        axis=0)
-        self.df_rf=self.df_rf[self.df_rf.index.isin(pd.Index(t_t))]
-
-        self.df_rf.index=np.around(self.df_rf.index.astype('float32'),decimals=4)
-
-        time =self.df_rf.index
+        except:
+            self.rightfoot=False
+            print("no rightfoot file")
         
-        acc_rf=self.df_rf.iloc[:,3:6]
-        gyro_rf=self.df_rf.iloc[:,0:3]
-        # read right into cp object
-        self.CP_data_rf=CP(acc=acc_rf,gyro=gyro_rf,app="manual_entry")
-        self.CP_data_rf.calculate_norm_accandgyro(gyro=self.CP_data_rf.gyro_interp,acc=self.CP_data_rf.acc_interp)
-        self.acc_rf_magnitude=self.CP_data_rf.acc_magnitude
-        self.gyro_rf_magnitude=self.CP_data_rf.gyro_magnitude
-        s_rf=self.CP_data_rf.detectstartofwalk(sig1=self.CP_data_rf.acc_magnitude,thresh=5)
+        if self.rightfoot:
+            #right foot
+            df_rf = df_rf.iloc[1:]
+            df_rf=df_rf.astype('float32')
+            
+            self.df_rf=df_rf
+            time=self.df_rf['Time'].values
+            #interpolate and filter
+            self.df_rf=self.df_rf.set_index('Time')
+            fs=100
+            t_t=np.linspace(0, time[-1], num=np.int(time[-1]*fs), 
+                            endpoint=True,dtype=np.float32)
+    
+            self.df_rf=self.df_rf.reindex(self.df_rf.index.union(t_t))
+            self.df_rf=self.df_rf.interpolate(method='linear', limit_direction='both',
+                                            axis=0)
+            self.df_rf=self.df_rf[self.df_rf.index.isin(pd.Index(t_t))]
+    
+            self.df_rf.index=np.around(self.df_rf.index.astype('float32'),decimals=4)
+    
+            time =self.df_rf.index
+            
+            acc_rf=self.df_rf.iloc[:,3:6]
+            gyro_rf=self.df_rf.iloc[:,0:3]
+            # read right into cp object
+            self.CP_data_rf=CP(acc=acc_rf,gyro=gyro_rf,app="manual_entry")
+            self.CP_data_rf.calculate_norm_accandgyro(gyro=self.CP_data_rf.gyro_interp,acc=self.CP_data_rf.acc_interp)
+            self.acc_rf_magnitude=self.CP_data_rf.acc_magnitude
+            self.gyro_rf_magnitude=self.CP_data_rf.gyro_magnitude
+            s_rf=self.CP_data_rf.detectstartofwalk(sig1=self.CP_data_rf.acc_magnitude,thresh=5)
+            s_f=s_rf
+            
+        if self.leftfoot and self.rightfoot:    
+            #start of walking in foot signal is the minimum from right and left
+            s_f=np.minimum(s_rf,s_lf)
+            self.ent_str_gaitup_feet.delete(0,tk.END)
+            self.ent_str_gaitup_feet.insert(0,s_f)
+            
+            self.ent_str_gaitup_feet.delete(0,tk.END)
+            self.ent_str_gaitup_feet.insert(0,s_f)
+            
         
-        #start of walking in foot signal is the minimum from right and left
-        s_f=np.minimum(s_rf,s_lf)
-        self.ent_str_gaitup_feet.delete(0,tk.END)
-        self.ent_str_gaitup_feet.insert(0,s_f)
+        
         
         #read phone data and detect start#
         self.CP_data_phone=CP(self.phone_direct,app="geoloc")
@@ -792,9 +908,14 @@ class MyApplication:
         self.s_w=self.CP_data_phone.detectstartofwalk(sig1=self.CP_data_phone.acc_magnitude,thresh=2)
         self.ent_str_phone_waist.delete(0,tk.END)
         self.ent_str_phone_waist.insert(0,self.s_w)
-        self.e_w=int(len(self.CP_data_phone.acc_magnitude)-
-                     self.CP_data_phone.detectstartofwalk(sig1=self.CP_data_phone.acc_magnitude[::-1]))
-
+        self.e_w=int(len(self.CP_data_phone.acc_magnitude)-self.CP_data_phone.detectstartofwalk(sig1=self.CP_data_phone.acc_magnitude[::-1]))
+        print("last walk inverse")
+        print(self.CP_data_phone.detectstartofwalk(sig1=self.CP_data_phone.acc_magnitude[::-1]))
+        
+        print("length of signal")
+        print(len(self.CP_data_phone.acc_magnitude))
+        print("end of walk")
+        print(self.e_w)
         self.btn_detect_start_stop["state"] = "normal"
         
         self.ent_str_walk.delete(0,tk.END)
@@ -832,15 +953,28 @@ class MyApplication:
         self.toolbar.update()
         self.canvas2._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         color = 'tab:blue'
+        
         b = self.figure2.add_subplot(111)
-        b.plot(self.acc_rf_magnitude,zorder=1)
-        b.plot(self.acc_lf_magnitude,zorder=1)
-        b.set_ylabel('Acc m/s\u00b2', color=color)
-        b.title.set_text("feet")
-        b.set_xticks([])
+        if self.rightfoot:
+            b.plot(self.acc_rf_magnitude,zorder=1)
+        if self.leftfoot:
+            b.plot(self.acc_lf_magnitude,zorder=1)
+
         s_f=int((self.ent_str_gaitup_feet.get()))
-        b.scatter(s_f,self.acc_lf_magnitude[s_f], color='red',marker="|",s=10000000000,zorder=2)
-        b.set(xlim=(s_f-1000, s_f+1000))
+        if self.leftfoot:
+            b.scatter(s_f,self.acc_lf_magnitude[s_f], color='red',marker="|",s=10000000000,zorder=2)
+            b.set_ylabel('Acc m/s\u00b2', color=color)
+            b.title.set_text("feet")
+            b.set_xticks([])
+            b.set(xlim=(s_f-1000, s_f+1000))
+        elif self.rightfoot:
+            b.scatter(s_f,self.acc_rf_magnitude[s_f], color='red',marker="|",s=10000000000,zorder=2)
+            b.set_ylabel('Acc m/s\u00b2', color=color)
+            b.title.set_text("feet")
+            b.set_xticks([])
+            b.set(xlim=(s_f-1000, s_f+1000))
+            
+        
         self.canvas2.draw()
         
         self.figure3 = Figure(figsize=(4, 3), dpi=100)
@@ -862,165 +996,200 @@ class MyApplication:
         self.canvas3.draw()
   
     def read_gaitup_excel(self,event=None):
-        
+        self.right_excel=False
+        self.left_excel=False
         gaitup_dir=os.path.join(self.path,"Gaitup_turn" )
         for root, dirs, files in os.walk(gaitup_dir):
             for file in files:
                 if file.endswith(".xlsx"):
                     if 'right' in file:
                         right_step_file= file
+                        self.right_excel=True
                         print(file)
                     if 'left' in file:
                         left_step_file= file
+                        self.left_excel=True
                         print(file)
-        #right 
-        right_file=os.path.join(gaitup_dir,right_step_file)
-        
-        
-        wb_right= load_workbook(right_file)
-        ws_right=wb_right["Sheet1"]
-        
-        start_analysis_gaitup_right = ws_right['B14'].value
-        stop_analysis_gaitup_right=ws_right['D14'].value
-        
-        ColD_right=ws_right['D']
-        ColD_right=ColD_right[25::]
-        
-        turns_HS_right=[]
-        straightwalk_HS_right=[]
-        i=0
-        for cl in ColD_right:
-            if cl.value!= None:
-                i=i+1
-                if cl.font.color != None and type(cl.font.color.rgb) == str:
-                    x=cl.value+start_analysis_gaitup_right
-                    turns_HS_right.append([i,x])
+        if self.right_excel:
+            #right 
+            right_file=os.path.join(gaitup_dir,right_step_file)
+            
+            
+            wb_right= load_workbook(right_file)
+            ws_right=wb_right["Sheet1"]
+            
+            start_analysis_gaitup_right = ws_right['B14'].value
+            stop_analysis_gaitup_right=ws_right['D14'].value
+            
+            ColD_right=ws_right['D']
+            ColD_right=ColD_right[25::]
+            
+            turns_HS_right=[]
+            straightwalk_HS_right=[]
+            i=0
+            for cl in ColD_right:
+                if cl.value!= None:
+                    i=i+1
+                    if cl.font.color != None and type(cl.font.color.rgb) == str:
+                        x=cl.value+start_analysis_gaitup_right
+                        turns_HS_right.append([i,x])
+                    else:
+                        x=cl.value+start_analysis_gaitup_right
+                        straightwalk_HS_right.append([i,x])
+                    
+            turns_HS_right=np.vstack(turns_HS_right)
+            straightwalk_HS_right=np.vstack(straightwalk_HS_right)
+            
+            #get index of straight walking steps in the main csv signal
+            time=self.CP_data_rf.acc_interp.index.values
+            straightwalk_HS_right_index=[]
+            for hs in straightwalk_HS_right[:,1]:
+                t1=np.where(time>hs)[0][0]
+                t2=t1-1
+                if np.abs(hs-time[t1])<=np.abs(hs-time[t2]):
+                    straightwalk_HS_right_index.append(t1)
                 else:
-                    x=cl.value+start_analysis_gaitup_right
-                    straightwalk_HS_right.append([i,x])
-                
-        turns_HS_right=np.vstack(turns_HS_right)
-        straightwalk_HS_right=np.vstack(straightwalk_HS_right)
-        
-        #get index of straight walking steps in the main csv signal
-        time=self.CP_data_rf.acc_interp.index.values
-        straightwalk_HS_right_index=[]
-        for hs in straightwalk_HS_right[:,1]:
-            t1=np.where(time>hs)[0][0]
-            t2=t1-1
-            if np.abs(hs-time[t1])<=np.abs(hs-time[t2]):
-                straightwalk_HS_right_index.append(t1)
-            else:
-                straightwalk_HS_right_index.append(t2)
-        
-        #get index of turn walking steps in the main csv signal
-        Turn_HS_right_index=[]
-        for hs in turns_HS_right[:,1]:
-            t1=np.where(time>hs)[0][0]
-            t2=t1-1
-            if np.abs(hs-time[t1])<=np.abs(hs-time[t2]):
-                Turn_HS_right_index.append(t1)
-            else:
-                Turn_HS_right_index.append(t2)
-                
-        #left
-        left_file=os.path.join(gaitup_dir,left_step_file)
-        
-        
-        wb_left= load_workbook(left_file)
-        ws_left=wb_left["Sheet1"]
-        
-        start_analysis_gaitup_left = ws_left['B14'].value
-        stop_analysis_gaitup_left=ws_left['D14'].value
-        
-        ColD_left=ws_left['D']
-        ColD_left=ColD_left[25::]
-        
-        turns_HS_left=[]
-        straightwalk_HS_left=[]
-        i=0
-        for cl in ColD_left:
-            if cl.value!= None:
-                i=i+1
-                if cl.font.color != None and type(cl.font.color.rgb) == str:
-                    x=cl.value+start_analysis_gaitup_left
-                    turns_HS_left.append([i,x])
+                    straightwalk_HS_right_index.append(t2)
+            
+            #get index of turn walking steps in the main csv signal
+            Turn_HS_right_index=[]
+            for hs in turns_HS_right[:,1]:
+                t1=np.where(time>hs)[0][0]
+                t2=t1-1
+                if np.abs(hs-time[t1])<=np.abs(hs-time[t2]):
+                    Turn_HS_right_index.append(t1)
                 else:
-                    x=cl.value+start_analysis_gaitup_left
-                    straightwalk_HS_left.append([i,x])
+                    Turn_HS_right_index.append(t2)
+                    
+            self.HS_r_index=np.array(straightwalk_HS_right_index)
+            self.start_excel_right=start_analysis_gaitup_right
+                    
+        if self.left_excel:
                 
-        turns_HS_left=np.vstack(turns_HS_left)
-        straightwalk_HS_left=np.vstack(straightwalk_HS_left)
-        
-        #get index of straight walking steps in the main csv signal
-        time=self.CP_data_lf.acc_interp.index.values
-        straightwalk_HS_left_index=[]
-        for hs in straightwalk_HS_left[:,1]:
-            t1=np.where(time>hs)[0][0]
-            t2=t1-1
-            if np.abs(hs-time[t1])<=np.abs(hs-time[t2]):
-                straightwalk_HS_left_index.append(t1)
-            else:
-                straightwalk_HS_left_index.append(t2)
-        
-        #get index of turn walking steps in the main csv signal
-        Turn_HS_left_index=[]
-        for hs in turns_HS_left[:,1]:
-            t1=np.where(time>hs)[0][0]
-            t2=t1-1
-            if np.abs(hs-time[t1])<=np.abs(hs-time[t2]):
-                Turn_HS_left_index.append(t1)
-            else:
-                Turn_HS_left_index.append(t2)
-                
+            #left
+            left_file=os.path.join(gaitup_dir,left_step_file)
+            
+            
+            wb_left= load_workbook(left_file)
+            ws_left=wb_left["Sheet1"]
+            
+            start_analysis_gaitup_left = ws_left['B14'].value
+            stop_analysis_gaitup_left=ws_left['D14'].value
+            
+            ColD_left=ws_left['D']
+            ColD_left=ColD_left[25::]
+            
+            turns_HS_left=[]
+            straightwalk_HS_left=[]
+            i=0
+            for cl in ColD_left:
+                if cl.value!= None:
+                    i=i+1
+                    if cl.font.color != None and type(cl.font.color.rgb) == str:
+                        x=cl.value+start_analysis_gaitup_left
+                        turns_HS_left.append([i,x])
+                    else:
+                        x=cl.value+start_analysis_gaitup_left
+                        straightwalk_HS_left.append([i,x])
+                    
+            turns_HS_left=np.vstack(turns_HS_left)
+            straightwalk_HS_left=np.vstack(straightwalk_HS_left)
+            
+            #get index of straight walking steps in the main csv signal
+            time=self.CP_data_lf.acc_interp.index.values
+            straightwalk_HS_left_index=[]
+            for hs in straightwalk_HS_left[:,1]:
+                t1=np.where(time>hs)[0][0]
+                t2=t1-1
+                if np.abs(hs-time[t1])<=np.abs(hs-time[t2]):
+                    straightwalk_HS_left_index.append(t1)
+                else:
+                    straightwalk_HS_left_index.append(t2)
+            
+            #get index of turn walking steps in the main csv signal
+            Turn_HS_left_index=[]
+            for hs in turns_HS_left[:,1]:
+                t1=np.where(time>hs)[0][0]
+                t2=t1-1
+                if np.abs(hs-time[t1])<=np.abs(hs-time[t2]):
+                    Turn_HS_left_index.append(t1)
+                else:
+                    Turn_HS_left_index.append(t2)
+                    
+            self.HS_l_index=np.array(straightwalk_HS_left_index)
+            self.start_excel_left=start_analysis_gaitup_left   
         # straight_walking_periods_left=self.ranges(straightwalk_HS_left[:,0])
         
         # turning_periods_left=self.ranges(turns_HS_left[:,0],d=2)
         
+        if self.left_excel and self.right_excel:
+            turn_right_left=np.concatenate((turns_HS_left[:,1],turns_HS_right[:,1]))
         
-        turn_right_left=np.concatenate((turns_HS_left[:,1],turns_HS_right[:,1]))
-        turn_right_left=turn_right_left*100
-        turn_right_left=turn_right_left.astype("int")
-        turn_right_left.sort()
-        turn_right_left=np.unique(turn_right_left)
+        elif self.left_excel:
+            turn_right_left=turns_HS_left[:,1]
         
-        self.turning_periods_left_right=self.ranges(turn_right_left,d=200)
-        self.turning_periods_left_right=np.array(self.turning_periods_left_right)
-        self.turning_periods_left_right=np.vstack(self.turning_periods_left_right)
-        print(self.turning_periods_left_right)
+        elif self.right_excel:
+            turn_right_left=turns_HS_right[:,1]
+            
+        if self.left_excel or self.right_excel:
+            turn_right_left=turn_right_left*100
+            turn_right_left=turn_right_left.astype("int")
+            turn_right_left.sort()
+            turn_right_left=np.unique(turn_right_left)
+            
+            self.turning_periods_left_right=self.ranges(turn_right_left,d=400)
+            self.turning_periods_left_right=np.array(self.turning_periods_left_right)
+            self.turning_periods_left_right=np.vstack(self.turning_periods_left_right)
+            print(self.turning_periods_left_right)
         
         #removing dupliactes in case turn is last step
 
-        i=0
-        while i<len(self.turning_periods_left_right):
-            if self.turning_periods_left_right[i,0]==self.turning_periods_left_right[i,1]:
-                self.turning_periods_left_right=np.delete(self.turning_periods_left_right,i,0)
-            i=i+1
+            i=0
+            while i<len(self.turning_periods_left_right):
+                if self.turning_periods_left_right[i,0]==self.turning_periods_left_right[i,1]:
+                    self.turning_periods_left_right=np.delete(self.turning_periods_left_right,i,0)
+                i=i+1
+    
+            print(self.turning_periods_left_right)
+            
 
-        print(self.turning_periods_left_right)
         
-        self.HS_r_index=np.array(straightwalk_HS_right_index)
-        
-        self.HS_l_index=np.array(straightwalk_HS_left_index)
-        
-        
+
         
     def crop_signals(self,event=None,end="shortest"):
         s_h=int((self.ent_str_gaitup_hand.get()))
         s_w=int((self.ent_str_phone_waist.get()))
         s_f=int((self.ent_str_gaitup_feet.get()))
         stop_phone=int((self.ent_stp_walk.get()))-s_w
+        
+        
+        stop_ind_feet=stop_phone
         print(s_h)
-        stop_ind_feet=np.maximum(self.HS_l_index[-1],self.HS_r_index[-1])+1-s_f
         
-        # HS index right and left
-        self.HS_r_index=self.HS_r_index-s_f
-        self.HS_l_index=self.HS_l_index-s_f
+        if self.rightfoot:
+            self.CP_data_rf.manual_crop(ind_start=s_f)
+            
+        if self.leftfoot:
+            self.CP_data_lf.manual_crop(ind_start=s_f)
+            
+        if self.left_excel or self.right_excel:
+            print("aligning turns start")
+            print(s_f)
+            self.turning_periods_left_right=self.turning_periods_left_right-s_f
         
-        self.turning_periods_left_right=self.turning_periods_left_right-s_f
-        
-        self.CP_data_rf.manual_crop(ind_start=s_f)
-        self.CP_data_lf.manual_crop(ind_start=s_f)
+        if self.right_excel:
+            self.HS_r_index=self.HS_r_index-s_f
+            stop_ind_feet=self.HS_r_index[-1]
+            
+        if self.left_excel:
+            self.HS_l_index=self.HS_l_index-s_f
+            stop_ind_feet=self.HS_l_index[-1]
+            
+        if self.left_excel and self.right_excel:
+            stop_ind_feet=np.maximum(self.HS_l_index[-1],self.HS_r_index[-1])+1
+            
+
+            
         self.CP_data_phone.manual_crop(ind_start=s_w)
         if self.hand:
             print("hand is available")
@@ -1030,32 +1199,39 @@ class MyApplication:
         if end=="shortest":
             print("shortest")
             print(stop_ind_feet)
-            stop_ind_feet=np.minimum(stop_phone,stop_ind_feet)
-            print(stop_ind_feet)
-            
-            ind_turn=np.where((self.turning_periods_left_right[:,0]<=stop_ind_feet)&(self.turning_periods_left_right[:,1]<=stop_ind_feet))[0]
-            self.turning_periods_left_right=self.turning_periods_left_right[ind_turn,:]
-            
-            ind_foot=np.where(self.HS_r_index<=stop_ind_feet)[0]
-            self.HS_r_index=self.HS_r_index[ind_foot]
-            
-            ind_foot=np.where(self.HS_l_index<=stop_ind_feet)[0]
-            self.HS_l_index=self.HS_l_index[ind_foot]
+            if self.left_excel or self.right_excel:
+                stop_ind_feet=np.minimum(stop_phone,stop_ind_feet)
+                print(stop_ind_feet)
+                
+                ind_turn=np.where((self.turning_periods_left_right[:,0]<=stop_ind_feet)&(self.turning_periods_left_right[:,1]<=stop_ind_feet))[0]
+                self.turning_periods_left_right=self.turning_periods_left_right[ind_turn,:]
+                
+                if self.right_excel:
+                    ind_foot=np.where(self.HS_r_index<=stop_ind_feet)[0]
+                    self.HS_r_index=self.HS_r_index[ind_foot]
+                if self.left_excel:
+                    ind_foot=np.where(self.HS_l_index<=stop_ind_feet)[0]
+                    self.HS_l_index=self.HS_l_index[ind_foot]
 
         #manual crop the interp#
-        self.CP_data_rf.manual_crop(ind_start=0,ind_stop=stop_ind_feet)
-        self.CP_data_lf.manual_crop(ind_start=0,ind_stop=stop_ind_feet)
+        if self.rightfoot:
+            self.CP_data_rf.manual_crop(ind_start=0,ind_stop=stop_ind_feet)
+        if self.leftfoot:
+            self.CP_data_lf.manual_crop(ind_start=0,ind_stop=stop_ind_feet)
         self.CP_data_phone.manual_crop(ind_start=0,ind_stop=stop_ind_feet)
         if self.hand:
             self.CP_data_h.manual_crop(ind_start=0,ind_stop=stop_ind_feet)
 
     def recalculate_filter_norm(self):
-        self.CP_data_lf.calculate_norm_accandgyro(gyro=self.CP_data_lf.gyro_interp,
+        
+        if self.leftfoot:
+            self.CP_data_lf.calculate_norm_accandgyro(gyro=self.CP_data_lf.gyro_interp,
                                                   acc=self.CP_data_lf.acc_interp)
-        self.acc_lf_magnitude=self.CP_data_lf.acc_magnitude
-        self.CP_data_rf.calculate_norm_accandgyro(gyro=self.CP_data_rf.gyro_interp,
+            self.acc_lf_magnitude=self.CP_data_lf.acc_magnitude
+        if self.rightfoot:
+            self.CP_data_rf.calculate_norm_accandgyro(gyro=self.CP_data_rf.gyro_interp,
                                                   acc=self.CP_data_rf.acc_interp)
-        self.acc_rf_magnitude=self.CP_data_rf.acc_magnitude
+            self.acc_rf_magnitude=self.CP_data_rf.acc_magnitude
         
         if self.hand:
             self.CP_data_h.filter_data(acc=self.CP_data_h.acc_interp,
@@ -1096,8 +1272,10 @@ class MyApplication:
         if self.hand:
             b.plot(self.acc_h_magnitude,zorder=1)
             b.plot(self.gyro_h_magnitude,zorder=1)
-        b.plot(self.acc_lf_magnitude,zorder=1)
-        b.plot(self.acc_rf_magnitude,zorder=1)
+        if self.leftfoot:    
+            b.plot(self.acc_lf_magnitude,zorder=1)
+        if self.rightfoot:
+            b.plot(self.acc_rf_magnitude,zorder=1)
         
         b.set_ylabel('Acc m/s\u00b2', color=color)
         b.title.set_text("allsignals")
@@ -1112,92 +1290,111 @@ class MyApplication:
     def calculate_gaitup_foot(self):
         print("calculating gaitup feet")
         
-        if (len(self.treeview_stat_GU.get_children())!=0):
-            self.treeview_stat_GU.delete(*self.treeview_stat.get_children())
+        if self.right_excel or self.left_excel:
         
-        stop_walk=self.turning_periods_left_right[:,0]
-        start_walk=self.turning_periods_left_right[:,1]
-        
-        stop_walk=np.array([*stop_walk, len(self.acc_rf_magnitude)])
-        start_walk=np.array([0, *start_walk])
-        n_phases=0
-        stride_times=[]
-        for i in range(0,len(stop_walk)):
-            steps_left_phase=self.HS_l_index[np.where((self.HS_l_index<stop_walk[i]) & (self.HS_l_index>start_walk[i]))[0]]
-            steps_right_phase=self.HS_r_index[np.where((self.HS_r_index<stop_walk[i]) & (self.HS_r_index>start_walk[i]))[0]]
+            if (len(self.treeview_stat_GU.get_children())!=0):
+                self.treeview_stat_GU.delete(*self.treeview_stat.get_children())
             
-            steps_all=np.concatenate((steps_left_phase,steps_right_phase))
-            steps_all.sort()
+            stop_walk=self.turning_periods_left_right[:,0]
+            start_walk=self.turning_periods_left_right[:,1]
             
-            if (len(steps_left_phase)!=0 or len(steps_left_phase)!=0):
-                self.CP_data_lf.computeVarStride(fs=100,remove_outliers=True,N=3,use_smartstep=True,manual_peaks=steps_all,use_peaks=True,
-                                                pocket=False,remove_step=0)
-                n_phases=n_phases+1
-
-
-        
-            
-
-            # fs=100
-            # stride_time_r=np.diff(steps_right_phase)/fs
-            # stride_time_l=np.diff(steps_left_phase)/fs
-            
-            # stride_time_r=np.array([i for i in stride_time_r if i > 0.8 and i < 1.5])
-            # stride_time_l=np.array([i for i in stride_time_l if i > 0.8 and i < 1.5])
-            # N=3
-            # mean=np.mean(stride_time_r)
-            # cut_off=N*np.std(stride_time_r)
-            # lower, upper =  mean- cut_off, mean + cut_off
-            # stride_time_r = np.array([i for i in stride_time_r if i > lower and i < upper])
-            
-            # N=3
-            # mean=np.mean(stride_time_l)
-            # cut_off=N*np.std(stride_time_l)
-            # lower, upper =  mean- cut_off, mean + cut_off
-            # stride_time_l = np.array([i for i in stride_time_l if i > lower and i < upper])
-            
-            # numberofstrides=len(stride_time_r)+len(stride_time_l)
-            # MeanStridetime=np.mean([np.mean(stride_time_r),np.mean(stride_time_l)])
-            # SDstridetime=np.maximum(np.around(np.std(stride_time_r),decimals=3),np.around(np.std(stride_time_l),decimals=3))
+            stop_walk=np.array([*stop_walk, len(self.acc_rf_magnitude)])
+            start_walk=np.array([0, *start_walk])
+            n_phases=0
+            stride_times=[]
+            for i in range(0,len(stop_walk)):
+                if self.left_excel:
+                    steps_left_phase=self.HS_l_index[np.where((self.HS_l_index<stop_walk[i]) & (self.HS_l_index>start_walk[i]))[0]]
+                    steps_all=steps_left_phase
+                if self.right_excel:
+                    steps_right_phase=self.HS_r_index[np.where((self.HS_r_index<stop_walk[i]) & (self.HS_r_index>start_walk[i]))[0]]
+                    steps_all=steps_right_phase
+                    
+                if self.left_excel and self.right_excel:
+                    steps_all=np.concatenate((steps_left_phase,steps_right_phase))
+                    steps_all.sort()
                 
-            # COV=np.around((SDstridetime*100)/MeanStridetime,decimals=3)
-            
-            #####
-                d=((i,np.around(np.mean(self.CP_data_lf.cycle_temp['stridetime']),decimals=3),
-                    self.CP_data_lf.cycle_temp['stridetime_std'],
-                    self.CP_data_lf.cycle_temp['stridetime_Cov'],
-                    len(self.CP_data_lf.cycle_temp["stridetime"])))   
-                self.treeview_stat_GU.insert('',tk.END,values=d)
+                if (len(steps_all)>3):
+                    print("not empty steps")
+                    print("number of steps %d"%len(steps_all))
+                    if self.left_excel and self.right_excel:
+                        print("using 2 excel  files")
+                        self.CP_data_lf.computeVarStride(fs=100,remove_outliers=True,N=3,use_smartstep=True,manual_peaks=steps_all,use_peaks=True,pocket=False,remove_step=0)
+                    else:
+                        print("using 1 excel  file")
+                        self.CP_data_lf.computeVarStride(fs=100,remove_outliers=True,N=3,use_smartstep=True,manual_peaks=steps_all,use_peaks=True,pocket=True,remove_step=0)
+                    n_phases=n_phases+1
+                    
+                    try:
+                        stride_times.append(self.CP_data_lf.cycle_temp['stridetime'])
+                    
+                        
+                    
+        
+                    # fs=100
+                    # stride_time_r=np.diff(steps_right_phase)/fs
+                    # stride_time_l=np.diff(steps_left_phase)/fs
+                    
+                    # stride_time_r=np.array([i for i in stride_time_r if i > 0.8 and i < 1.5])
+                    # stride_time_l=np.array([i for i in stride_time_l if i > 0.8 and i < 1.5])
+                    # N=3
+                    # mean=np.mean(stride_time_r)
+                    # cut_off=N*np.std(stride_time_r)
+                    # lower, upper =  mean- cut_off, mean + cut_off
+                    # stride_time_r = np.array([i for i in stride_time_r if i > lower and i < upper])
+                    
+                    # N=3
+                    # mean=np.mean(stride_time_l)
+                    # cut_off=N*np.std(stride_time_l)
+                    # lower, upper =  mean- cut_off, mean + cut_off
+                    # stride_time_l = np.array([i for i in stride_time_l if i > lower and i < upper])
+                    
+                    # numberofstrides=len(stride_time_r)+len(stride_time_l)
+                    # MeanStridetime=np.mean([np.mean(stride_time_r),np.mean(stride_time_l)])
+                    # SDstridetime=np.maximum(np.around(np.std(stride_time_r),decimals=3),np.around(np.std(stride_time_l),decimals=3))
+                        
+                    # COV=np.around((SDstridetime*100)/MeanStridetime,decimals=3)
+                    
+                    #####
+                        d=((i,np.around(np.mean(self.CP_data_lf.cycle_temp['stridetime']),decimals=3),
+                            self.CP_data_lf.cycle_temp['stridetime_std'],
+                            self.CP_data_lf.cycle_temp['stridetime_Cov'],
+                            len(self.CP_data_lf.cycle_temp["stridetime"])))   
+                        self.treeview_stat_GU.insert('',tk.END,values=d)
+                    except Exception as e:
+                        print("stridetimes are filtered in this region so it will be omitted")
+                    
+                    
+                else:
+                    print("no steps has occured in this period")
+              
                 
-                stride_times.append(self.CP_data_lf.cycle_temp['stridetime'])
+            # steps_all=np.concatenate((self.HS_l_index,self.HS_r_index))
+            # steps_all.sort()
+                
+            # self.CP_data_lf.computeVarStride(fs=100,remove_outliers=True,N=3,use_smartstep=True,manual_peaks=steps_all,use_peaks=True,
+            #                                         pocket=False,remove_step=0)
+                
+            # result=self.CP_data_lf.cycle_temp
+            
+            if self.left_excel and self.right_excel:
+                stride_times=np.vstack(stride_times)
             else:
-                print("no steps has occured in this period")
-          
-            
-        # steps_all=np.concatenate((self.HS_l_index,self.HS_r_index))
-        # steps_all.sort()
-            
-        # self.CP_data_lf.computeVarStride(fs=100,remove_outliers=True,N=3,use_smartstep=True,manual_peaks=steps_all,use_peaks=True,
-        #                                         pocket=False,remove_step=0)
-            
-        # result=self.CP_data_lf.cycle_temp
-        stride_times=np.vstack(stride_times)
-        print(stride_times)
-        
-        self.lbl_SDstride_GU.configure(text ='%.2f milliseconds'%(np.round(np.std(stride_times),decimals=5)*1000))
-        self.lbl_CVstride_GU.configure(text ='%.2f %%'%(np.round(np.std(stride_times)/np.mean(stride_times),decimals=5))*100)
-        self.lbl_Nstride_GU.configure(text ='%d'%(len(stride_times)))
-        self.lbl_Nphase_GU.configure(text ='%d'%(n_phases))
-            
-            # print("##feet##")
-            # print("the sd of stride duration is:")
-            # print(SDstridetime)
-            
-            # print("the number of strides is:")
-            # print(numberofstrides)
-            
-            # print("the cov of strides")
-            # print(COV)
+                stride_times=np.hstack(stride_times)
+            self.lbl_SDstride_GU.configure(text ='%.2f milliseconds'%(np.round(np.std(stride_times),decimals=5)*1000))
+            self.lbl_CVstride_GU.configure(text ='%.2f %%'%(np.round(np.std(stride_times)/np.mean(stride_times),decimals=5)*100))
+            self.lbl_Nstride_GU.configure(text ='%d'%(len(stride_times)))
+            self.lbl_Nphase_GU.configure(text ='%d'%(n_phases))
+                
+                # print("##feet##")
+                # print("the sd of stride duration is:")
+                # print(SDstridetime)
+                
+                # print("the number of strides is:")
+                # print(numberofstrides)
+                
+                # print("the cov of strides")
+                # print(COV)
         
             
         
@@ -1319,29 +1516,32 @@ class MyApplication:
                 steps_smartstep=self.CP_data_h.inverse_window_step(steps_in_window)
                 
                 steps_smartstep=np.array(steps_smartstep)
-                cum_ind=phases_adj[i][0]
-                peaks=steps_smartstep+cum_ind
-                tot_peaks.append(peaks)
+
                 
-                
-                self.CP_data_h.computeVarStride(fs=100,remove_outliers=True,N=3,use_smartstep=True,manual_peaks=peaks,use_peaks=True,
-                                          pocket=False,remove_step=turn_strides[i])
-        
-                result=self.CP_data_h.cycle_temp
-                
-                
-                for k in range(0,len(self.CP_data_h.cycle_temp['stridetime'])):
-                    result_adj.append((i,k+1,self.CP_data_h.cycle_temp['stridetime'][k][0]))
+                if (len(steps_smartstep)>5):
+                    cum_ind=phases_adj[i][0]
+                    peaks=steps_smartstep+cum_ind
+                    tot_peaks.append(peaks)
+                    self.CP_data_h.computeVarStride(fs=100,remove_outliers=True,N=3,use_smartstep=True,manual_peaks=peaks,use_peaks=True,
+                                              pocket=False,remove_step=turn_strides[i])
+            
+                    result=self.CP_data_h.cycle_temp
                     
-                # for d in result_adj:
-                #     self.treeview_res.insert('', tk.END, values=d)
-                 
-                d=((i,np.around(np.mean(self.CP_data_h.cycle_temp['stridetime']),decimals=3),
-                    self.CP_data_h.cycle_temp['stridetime_std'],
-                    self.CP_data_h.cycle_temp['stridetime_Cov'],
-                    len(result["stridetime"])))   
-                self.treeview_stat_HP.insert('',tk.END,values=d)
-               
+                    
+                    for k in range(0,len(self.CP_data_h.cycle_temp['stridetime'])):
+                        result_adj.append((i,k+1,self.CP_data_h.cycle_temp['stridetime'][k][0]))
+                        
+                    # for d in result_adj:
+                    #     self.treeview_res.insert('', tk.END, values=d)
+                     
+                    d=((i,np.around(np.mean(self.CP_data_h.cycle_temp['stridetime']),decimals=3),
+                        self.CP_data_h.cycle_temp['stridetime_std'],
+                        self.CP_data_h.cycle_temp['stridetime_Cov'],
+                        len(result["stridetime"])))   
+                    self.treeview_stat_HP.insert('',tk.END,values=d)
+                else:
+                    print("very few steps were recorded by smartstep")
+                   
                 
         self.tot_peaks=np.hstack(tot_peaks)
         result_adj=np.vstack(result_adj)
@@ -1386,9 +1586,12 @@ class MyApplication:
         self.b = self.figure.add_subplot(512)
         self.b.plot(self.CP_data_phone.gyro_magnitude,zorder=1)
         
-        self.c = self.figure.add_subplot(513)
-        self.c.plot(self.acc_rf_magnitude,zorder=1)
-        self.c.plot(self.acc_lf_magnitude,zorder=1)
+        if self.rightfoot or self.leftfoot:
+            self.c = self.figure.add_subplot(513)
+        if self.rightfoot:
+            self.c.plot(self.acc_rf_magnitude,zorder=1)
+        if self.leftfoot:
+            self.c.plot(self.acc_lf_magnitude,zorder=1)
         
         if self.hand:
             self.d = self.figure.add_subplot(514)

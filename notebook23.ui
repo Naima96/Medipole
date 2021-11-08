@@ -609,9 +609,10 @@ Turn5: (start,stop)
                                 <property name="state">disabled</property>
                                 <property name="text" translatable="yes">refresh turn table</property>
                                 <bind sequence="&lt;Button-1&gt;" handler="Refresh_treeview" add="" />
-                                <layout manager="pack">
+                                <layout manager="grid">
+                                  <property name="column">1</property>
                                   <property name="propagate">True</property>
-                                  <property name="side">right</property>
+                                  <property name="row">1</property>
                                 </layout>
                               </object>
                             </child>
@@ -620,9 +621,10 @@ Turn5: (start,stop)
                                 <property name="state">disabled</property>
                                 <property name="text" translatable="yes">Detect start/stop walking</property>
                                 <bind sequence="&lt;Button-1&gt;" handler="Detect_startandend" add="" />
-                                <layout manager="pack">
+                                <layout manager="grid">
+                                  <property name="column">0</property>
                                   <property name="propagate">True</property>
-                                  <property name="side">left</property>
+                                  <property name="row">2</property>
                                 </layout>
                               </object>
                             </child>
@@ -631,19 +633,20 @@ Turn5: (start,stop)
                                 <property name="state">disabled</property>
                                 <property name="text" translatable="yes">Detect steps</property>
                                 <bind sequence="&lt;Button-1&gt;" handler="Detect_steps" add="" />
-                                <layout manager="pack">
-                                  <property name="anchor">e</property>
+                                <layout manager="grid">
+                                  <property name="column">2</property>
                                   <property name="propagate">True</property>
-                                  <property name="side">right</property>
+                                  <property name="row">1</property>
                                 </layout>
                               </object>
                             </child>
                             <child>
                               <object class="ttk.Menubutton" id="menubutton_2">
                                 <property name="text" translatable="yes">select turn start or stop</property>
-                                <layout manager="pack">
+                                <layout manager="grid">
+                                  <property name="column">0</property>
                                   <property name="propagate">True</property>
-                                  <property name="side">top</property>
+                                  <property name="row">1</property>
                                 </layout>
                                 <child>
                                   <object class="tk.Menu" id="menu_1">
@@ -659,6 +662,34 @@ Turn5: (start,stop)
                                         <property name="command_id_arg">false</property>
                                         <property name="label" translatable="yes">Start_walk</property>
                                         <property name="variable">string:var_turn</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="ttk.Menubutton" id="menubutton_2_1">
+                                <property name="text" translatable="yes">select step detection method</property>
+                                <layout manager="grid">
+                                  <property name="column">4</property>
+                                  <property name="propagate">True</property>
+                                  <property name="row">1</property>
+                                </layout>
+                                <child>
+                                  <object class="tk.Menu" id="menu_1_1">
+                                    <child>
+                                      <object class="tk.Menuitem.Radiobutton" id="radio_usesmartstep">
+                                        <property name="command_id_arg">false</property>
+                                        <property name="label" translatable="yes">Use_smartstep</property>
+                                        <property name="variable">string:var_step_method</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="tk.Menuitem.Radiobutton" id="radio_usepeak">
+                                        <property name="command_id_arg">false</property>
+                                        <property name="label" translatable="yes">Use_peak_detection</property>
+                                        <property name="variable">string:var_step_method</property>
                                       </object>
                                     </child>
                                   </object>

@@ -825,7 +825,7 @@ class phone(object):
             magmatrix=self.gyro_magnitude
             #pocket
             if detect_turn:
-                peak_index,peak_properties= find_peaks(magmatrix,distance=500,height=(100,None),prominence=(100,None),width=(None,None),threshold=(None,300))#slow height(100,None) # comf height (120,None) # high speed height (150)
+                peak_index,peak_properties= find_peaks(magmatrix,distance=500,height=(1.5,None),prominence=(1.5,None),width=(None,None),threshold=(None,3))#slow height(100,None) # comf height (120,None) # high speed height (150)
                 
                 delta_gyr=np.abs(np.amax(-(magmatrix-np.mean(magmatrix))))/10
                 valley_index,valley_properties= find_peaks(-magmatrix,distance=30,height=(None,None),prominence=(None,None),width=(None,None),threshold=(None,delta_gyr))
@@ -911,8 +911,8 @@ class phone(object):
             rs=stride_time_contralateral
             
             if remove_outliers:
-                stride_time_leading=np.array([i for i in stride_time_leading if i > 0.8 and i < 1.5])
-                stride_time_contralateral=np.array([i for i in stride_time_contralateral if i > 0.8 and i < 1.5])
+                stride_time_leading=np.array([i for i in stride_time_leading if i >= 0.8 and i <= 2])
+                stride_time_contralateral=np.array([i for i in stride_time_contralateral if i >= 0.8 and i <= 2])
                 #---stride time leading foot---
                 mean=np.mean(stride_time_leading)
                 cut_off=N*np.std(stride_time_leading)
@@ -938,30 +938,34 @@ class phone(object):
             #---merge left right stride cycle
             rl_stride=[]
             j=0
-            while j<np.minimum(len(ls),len(rs)):
-        
-                rl_stride.append(ls[j])
-                rl_stride.append(rs[j])
-                j=j+1
+            
+            if np.minimum(len(ls),len(rs))>1:
+                while j<np.minimum(len(ls),len(rs)):
+            
+                    rl_stride.append(ls[j])
+                    rl_stride.append(rs[j])
+                    j=j+1
+                    
+                print("")
+                print(rl_stride)
                 
-            print("")
-            print(rl_stride)
-            
-            rl_stride=np.vstack(rl_stride)
-            cycle_tempparam['stridetime']=rl_stride
-            
-            cycle_tempparam['stride_time_leading_std']=np.around(np.std(cycle_tempparam['stride_time_leading']),decimals=3)
-            cycle_tempparam['stride_time_leading_Cov']=np.around(np.std(cycle_tempparam['stride_time_leading']*100)/np.mean(cycle_tempparam['stride_time_leading']),decimals=3)
-            
-            cycle_tempparam['stride_time_contralateral_std']=np.around(np.std(cycle_tempparam['stride_time_contralateral']),decimals=3)
-            cycle_tempparam['stride_time_contralateral_Cov']=np.around(np.std(cycle_tempparam['stride_time_contralateral']*100)/np.mean(cycle_tempparam['stride_time_contralateral']),decimals=3)
-            
-            cycle_tempparam['stridetime_std']=np.around(np.std(cycle_tempparam['stridetime']),decimals=3)
-            cycle_tempparam['stridetime_Cov']=np.around(np.std(cycle_tempparam['stridetime']*100)/np.mean(cycle_tempparam['stridetime']),decimals=3)
-            
-            cycle_tempparam['steptime_std']=np.around(np.std(cycle_tempparam['steptime']),decimals=3)
-            cycle_tempparam['steptime_Cov']=np.around(np.std(cycle_tempparam['steptime']*100)/np.mean(cycle_tempparam['steptime']),decimals=3)
-            
+                rl_stride=np.vstack(rl_stride)
+                cycle_tempparam['stridetime']=rl_stride
+                
+                cycle_tempparam['stride_time_leading_std']=np.around(np.std(cycle_tempparam['stride_time_leading']),decimals=3)
+                cycle_tempparam['stride_time_leading_Cov']=np.around(np.std(cycle_tempparam['stride_time_leading']*100)/np.mean(cycle_tempparam['stride_time_leading']),decimals=3)
+                
+                cycle_tempparam['stride_time_contralateral_std']=np.around(np.std(cycle_tempparam['stride_time_contralateral']),decimals=3)
+                cycle_tempparam['stride_time_contralateral_Cov']=np.around(np.std(cycle_tempparam['stride_time_contralateral']*100)/np.mean(cycle_tempparam['stride_time_contralateral']),decimals=3)
+                
+                cycle_tempparam['stridetime_std']=np.around(np.std(cycle_tempparam['stridetime']),decimals=3)
+                cycle_tempparam['stridetime_Cov']=np.around(np.std(cycle_tempparam['stridetime']*100)/np.mean(cycle_tempparam['stridetime']),decimals=3)
+                
+                cycle_tempparam['steptime_std']=np.around(np.std(cycle_tempparam['steptime']),decimals=3)
+                cycle_tempparam['steptime_Cov']=np.around(np.std(cycle_tempparam['steptime']*100)/np.mean(cycle_tempparam['steptime']),decimals=3)
+                
+            else:
+                print("most strides have been filtered because of misdetection ")
         self.cycle_temp=cycle_tempparam
         
     
