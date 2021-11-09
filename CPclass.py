@@ -886,29 +886,48 @@ class phone(object):
             else:
                 peaks=np.array(self.peakandvalley['valley_index'])
 
-
         if pocket:
             #---if cellphone is in the pocket---
             stride_time=np.diff(peaks)/fs
+            
+            list_stride_time=[]
+            list_step_time=[]
+            for i in range(0,len(peaks)-1):
+                stride_time=peaks[i+1]-peaks[i]
+                stride_time=stride_time/fs
+                list_stride_time.append([peaks[i],peaks[i+1],stride_time])
+            list_stride_time=np.vstack(list_stride_time)
+
             if remove_outliers:
-                #---if we want to remove outliers---
-                mean=np.mean(stride_time)
-                cut_off=N*np.std(stride_time)
+                list_stride_time=np.vstack([i for i in list_stride_time if i[2]>=0.8 and i[2]<=2])
+                mean=np.mean(list_stride_time[:,2])
+                cut_off=N*np.std(list_stride_time[:,2])
                 lower, upper =  mean- cut_off, mean + cut_off
-                cycle_tempparam['stridetime'] = np.array([i for i in stride_time if i > lower and i < upper])
-            else:
-                cycle_tempparam['stridetime']=stride_time
+                list_stride_time=np.vstack([i for i in list_stride_time if i[2]>=lower and i[2]<=upper])
+
+            cycle_tempparam['stridetime']=list_stride_time[:,2]
             #---stride time std and cov
             cycle_tempparam['stridetime_std']=np.around(np.std(cycle_tempparam['stridetime']),decimals=3)
             cycle_tempparam['stridetime_Cov']=np.around(np.std(cycle_tempparam['stridetime']*100)/np.mean(cycle_tempparam['stridetime']),decimals=3)
-            
+            cycle_tempparam["detailed_stridetime"]=list_stride_time
         else:
             #---if cellphone is in the hand or waist we can detect leading and contralateral foot stride time---
-            step_time=np.diff(peaks)/fs
             stride_time_leading=np.diff(peaks[::2])/fs
             stride_time_contralateral=np.diff(peaks[1::2])/fs
-            ls=stride_time_leading
-            rs=stride_time_contralateral
+
+            list_stride_time=[]
+            list_step_time=[]
+            for i in range(0,len(peaks)-2):
+                step_time=peaks[i+1]-peaks[i]
+                step_time=step_time/fs
+                list_step_time.append([peaks[i],peaks[i+1],step_time])
+                
+                stride_time=peaks[i+2]-peaks[i]
+                stride_time=stride_time/fs
+                list_stride_time.append([peaks[i],peaks[i+2],stride_time])
+            
+            list_step_time=np.vstack(list_step_time)
+            list_stride_time=np.vstack(list_stride_time)
             
             if remove_outliers:
                 stride_time_leading=np.array([i for i in stride_time_leading if i >= 0.8 and i <= 2])
@@ -923,34 +942,32 @@ class phone(object):
                 cut_off=N*np.std(stride_time_contralateral)
                 lower, upper =  mean- cut_off, mean + cut_off
                 cycle_tempparam['stride_time_contralateral'] = np.array([i for i in stride_time_contralateral if i > lower and i < upper])
+                
                 #---step time---
-                mean=np.mean(step_time)
-                cut_off=N*np.std(step_time)
+                mean=np.mean(list_step_time[:,2])
+                cut_off=N*np.std(list_step_time[:,2])
                 lower, upper =  mean- cut_off, mean + cut_off
-                cycle_tempparam['steptime'] = np.array([i for i in step_time if i > lower and i < upper])
-                ls=cycle_tempparam['stride_time_leading']
-                rs=cycle_tempparam['stride_time_contralateral']
+                cycle_tempparam['steptime'] = np.array([i for i in list_step_time[:,2] if i > lower and i < upper])
+
+                list_stride_time=np.vstack([i for i in list_stride_time if i[2]>=0.8 and i[2]<=2])
+                mean=np.mean(list_stride_time[:,2])
+                cut_off=N*np.std(list_stride_time[:,2])
+                lower, upper =  mean- cut_off, mean + cut_off
+                list_stride_time=np.vstack([i for i in list_stride_time if i[2]>=lower and i[2]<=upper])
+
             else:
                 cycle_tempparam['stride_time_leading']=stride_time_leading
                 cycle_tempparam['stride_time_contralateral']=stride_time_contralateral
                 cycle_tempparam['steptime']=step_time
                 
             #---merge left right stride cycle
-            rl_stride=[]
-            j=0
             
-            if np.minimum(len(ls),len(rs))>1:
-                while j<np.minimum(len(ls),len(rs)):
+            rl_stride=list_stride_time[:,2]
             
-                    rl_stride.append(ls[j])
-                    rl_stride.append(rs[j])
-                    j=j+1
-                    
-                print("")
-                print(rl_stride)
-                
-                rl_stride=np.vstack(rl_stride)
+            if len(rl_stride)>1:
                 cycle_tempparam['stridetime']=rl_stride
+                cycle_tempparam["detailed_stridetime"]=list_stride_time
+                cycle_tempparam["detailed_steptime"]=list_step_time
                 
                 cycle_tempparam['stride_time_leading_std']=np.around(np.std(cycle_tempparam['stride_time_leading']),decimals=3)
                 cycle_tempparam['stride_time_leading_Cov']=np.around(np.std(cycle_tempparam['stride_time_leading']*100)/np.mean(cycle_tempparam['stride_time_leading']),decimals=3)
@@ -963,6 +980,7 @@ class phone(object):
                 
                 cycle_tempparam['steptime_std']=np.around(np.std(cycle_tempparam['steptime']),decimals=3)
                 cycle_tempparam['steptime_Cov']=np.around(np.std(cycle_tempparam['steptime']*100)/np.mean(cycle_tempparam['steptime']),decimals=3)
+                
                 
             else:
                 print("most strides have been filtered because of misdetection ")

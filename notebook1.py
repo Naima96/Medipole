@@ -586,6 +586,7 @@ class MyApplication:
         turn_strides=[]
         phases=[]
         tot_peaks=[]
+        result_adj=[]
         
         for line in self.treeview.get_children():
             phases.append(self.treeview.item(line)['values'])
@@ -609,8 +610,8 @@ class MyApplication:
     
         
         df = pd.concat(accc,ignore_index=True)
-        plt.figure()
-        plt.plot(df)
+        # plt.figure()
+        # plt.plot(df)
         cum_ind=0     
         for i in range(0,len(accc)):
             
@@ -665,50 +666,55 @@ class MyApplication:
                 result=self.CP_data_phone.cycle_temp
                 try:
                     if len(self.CP_data_phone.cycle_temp['stridetime'])>5:
-                        result_adj=[]
-                        for k in range(0,len(self.CP_data_phone.cycle_temp['stridetime'])):
-                            result_adj.append((i,k+1,self.CP_data_phone.cycle_temp['stridetime'][k][0]))
-                            
+                        result_adj.append(self.CP_data_phone.cycle_temp["detailed_stridetime"])
+                        
                         for d in result_adj:
                             self.treeview_res.insert('', tk.END, values=d)
+                            
+                        
                          
-                        d=((i,np.around(np.mean(self.CP_data_phone.cycle_temp['stridetime']),decimals=3),self.CP_data_phone.cycle_temp['stridetime_std'],self.CP_data_phone.cycle_temp['stridetime_Cov'],len(result["stridetime"])))   
+                        d=((i,np.around(np.mean(self.CP_data_phone.cycle_temp['stridetime']),decimals=3),
+                            self.CP_data_phone.cycle_temp['stridetime_std'],
+                            self.CP_data_phone.cycle_temp['stridetime_Cov'],
+                            len(result["stridetime"]))) 
+                        
                         self.treeview_stat.insert('',tk.END,values=d)
                 except Exception as e:
                     print (repr(e))
                     print("no calculation of stride time for this segment")
             else:
                 print("no steps occured in this walking period")
+         
             
         self.tot_peaks=np.hstack(tot_peaks)
-
+        result_adj=np.vstack(result_adj)
         print(self.treeview_stat.get_children())
         exported_list=[]
         
         for line in self.treeview_stat.get_children():
             exported_list.append(self.treeview_stat.item(line)['values'])
             
-        self.exported_results=pd.DataFrame(exported_list, columns=["Phase", "Mean stride duration", "standard deviation of stride duration","Coefficient of variance of stride duration", "Number of strides"])
+        self.exported_results_summary_phone=pd.DataFrame(exported_list, columns=["Phase", "Mean stride duration", "standard deviation of stride duration","Coefficient of variance of stride duration", "Number of strides"])
         
         # print(self.exported_results)
         
-        exported_list=[]
+        # exported_list=[]
         
-        for line in self.treeview_res.get_children():
-            exported_list.append(self.treeview_res.item(line)['values'])
+        # for line in self.treeview_res.get_children():
+        #     exported_list.append(self.treeview_res.item(line)['values'])
             
         # print(exported_list)
             
-        self.exported_results_res=pd.DataFrame(exported_list, columns=["Phase","stride number", "stride duration"])
+        self.exported_results_phone=pd.DataFrame(result_adj, columns=["Start Heel strike foot","Start Heel strike foot", "stride duration"])
         
         # print(self.exported_results)
         
-        self.exported_results_res['stride duration']=pd.to_numeric(self.exported_results_res['stride duration'], downcast='float')
+        self.exported_results_phone['stride duration']=pd.to_numeric(self.exported_results_phone['stride duration'], downcast='float')
         
-        self.lbl_SDstride.configure(text ='%.2f milliseconds'%(np.round(np.std(self.exported_results_res['stride duration'].values),decimals=5)*1000))
-        self.lbl_CVstride.configure(text ='%.2f %%'%(np.round(np.std(self.exported_results_res['stride duration'].values)/np.mean(self.exported_results_res['stride duration'].values),decimals=5)*100))
-        self.lbl_Nstride.configure(text ='%d'%(len(self.exported_results_res['stride duration'].values)))
-        self.lbl_Nphase.configure(text ='%d'%(len(self.exported_results)))
+        self.lbl_SDstride.configure(text ='%.2f milliseconds'%(np.round(np.std(self.exported_results_phone['stride duration'].values),decimals=5)*1000))
+        self.lbl_CVstride.configure(text ='%.2f %%'%(np.round(np.std(self.exported_results_phone['stride duration'].values)/np.mean(self.exported_results_phone['stride duration'].values),decimals=5)*100))
+        self.lbl_Nstride.configure(text ='%d'%(len(self.exported_results_phone['stride duration'].values)))
+        self.lbl_Nphase.configure(text ='%d'%(len(self.exported_results_phone)))
         
         self.plot_stridetime()
         
@@ -1200,6 +1206,8 @@ class MyApplication:
             print("shortest")
             print(stop_ind_feet)
             if self.left_excel or self.right_excel:
+                if stop_phone<stop_ind_feet-1000:
+                    print("the phone stops acquisition before end of trial")
                 stop_ind_feet=np.minimum(stop_phone,stop_ind_feet)
                 print(stop_ind_feet)
                 
@@ -1378,7 +1386,7 @@ class MyApplication:
             # result=self.CP_data_lf.cycle_temp
             
             if self.left_excel and self.right_excel:
-                stride_times=np.vstack(stride_times)
+                stride_times=np.hstack(stride_times)
             else:
                 stride_times=np.hstack(stride_times)
             self.lbl_SDstride_GU.configure(text ='%.2f milliseconds'%(np.round(np.std(stride_times),decimals=5)*1000))
@@ -1637,6 +1645,8 @@ class MyApplication:
         
         self.exported_results.to_csv(self.export_path+"\\_exported_results.csv",index=False,header=True)
         self.exported_results_res.to_csv(self.export_path+"\\_exported_stride_results.csv",index=False,header=True)
+        
+        
         print("saved")
     
     
@@ -1670,12 +1680,12 @@ class MyApplication:
         self.canvas2._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         self.b = self.figure2.add_subplot(111)
             
-        self.b.plot(self.exported_results_res['stride duration'],zorder=1)
+        self.b.plot(self.exported_results_phone['stride duration'],zorder=1)
         self.b.set_ylabel('Stride duration (s)')
         self.b.set_xlabel('Stride number')
-        self.b.axhline(y=np.mean(self.exported_results_res['stride duration']),label='Average Stride Time',color='r')
-        self.b.axhline(y=np.mean(self.exported_results_res['stride duration'])-np.std(self.exported_results_res['stride duration']),linestyle='--',color='r',linewidth=0.5)
-        self.b.axhline(y=np.mean(self.exported_results_res['stride duration'])+np.std(self.exported_results_res['stride duration']),linestyle='--',color='r',linewidth=0.5)
+        self.b.axhline(y=np.mean(self.exported_results_phone['stride duration']),label='Average Stride Time',color='r')
+        self.b.axhline(y=np.mean(self.exported_results_phone['stride duration'])-np.std(self.exported_results_phone['stride duration']),linestyle='--',color='r',linewidth=0.5)
+        self.b.axhline(y=np.mean(self.exported_results_phone['stride duration'])+np.std(self.exported_results_phone['stride duration']),linestyle='--',color='r',linewidth=0.5)
         self.b.text(0.8, 0.8,("Stride std:%s, Stride cov:%s"%(self.lbl_SDstride.cget("text"),self.lbl_CVstride.cget("text"))),size=10,transform=self.figure2.transFigure,ha="right", va="top", bbox=dict(facecolor='red', alpha=0.5))
         self.canvas2.draw()
 
