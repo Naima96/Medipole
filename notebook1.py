@@ -76,22 +76,41 @@ class MyApplication:
         self.lbl_CVstride=builder.get_object('CV_stride')
         self.lbl_Nstride=builder.get_object('N_stride')
         self.lbl_Nphase=builder.get_object('N_phase')
+        self.lbl_mean_stridetime=builder.get_object('lbl_mean_stridetime')
         
         self.lbl_SDstride_GU=builder.get_object('SD_stride_GU')
         self.lbl_CVstride_GU=builder.get_object('CV_stride_GU')
         self.lbl_Nstride_GU=builder.get_object('N_stride_GU')
         self.lbl_Nphase_GU=builder.get_object('N_phase_GU')
+        self.lbl_mean_stridetime_GU=builder.get_object('lbl_mean_stridetime_GU')
         
         self.lbl_SDstride_HP=builder.get_object('SD_stride_HP')
         self.lbl_CVstride_HP=builder.get_object('CV_stride_HP')
         self.lbl_Nstride_HP=builder.get_object('N_stride_HP')
         self.lbl_Nphase_HP=builder.get_object('N_phase_HP')
+        self.lbl_mean_stridetime_HP=builder.get_object('lbl_mean_stridetime_HP')
         
         self.lbl_lyapx=builder.get_object('lbl_lyapx')
         self.lbl_lyapy=builder.get_object('lbl_lyapy')
         self.lbl_lyapz=builder.get_object('lbl_lyapz')
         self.lbl_lyapr=builder.get_object('lbl_lyapr')
         
+        self.lbl_se_x=builder.get_object('se_x')
+        self.lbl_se_y=builder.get_object('se_y')
+        self.lbl_se_z=builder.get_object('se_z')
+        self.lbl_se_r=builder.get_object('se_r')
+        
+        self.lbl_se_stridetime=builder.get_object('se_stridetime')
+        self.lbl_se_gc_x=builder.get_object('se_gc_x')
+        self.lbl_se_gc_y=builder.get_object('se_gc_y')
+        self.lbl_se_gc_z=builder.get_object('se_gc_z')
+        self.lbl_se_gc_r=builder.get_object('se_gc_r')
+        
+        
+        self.lbl_DFA_phone=builder.get_object('lbl_dfaphone')
+        self.lbl_DFA_feet=builder.get_object('lbl_dfafeet')
+        self.lbl_hand=builder.get_object('lbl_dfahand')
+
         #get entries
         self.ent_str_walk = self.builder.get_object('str_walk')
         self.ent_stp_walk = self.builder.get_object('stp_walk')
@@ -101,6 +120,11 @@ class MyApplication:
         self.ent_timedelay = self.builder.get_object('ent_timedelay')
         self.ent_Nbstridelyap = self.builder.get_object('ent_Nbstridelyap')
         self.ent_turntime=self.builder.get_object('ent_turntime')
+        
+        self.ent_vect_length = self.builder.get_object('vect_length')
+        self.ent_tolerance=self.builder.get_object('tol_r')
+        
+        
         
         self.ent_str_gaitup_feet=self.builder.get_object('str_gaitup_feet')
         self.ent_str_phone_waist=self.builder.get_object('str_phone_waist')
@@ -580,6 +604,26 @@ class MyApplication:
         edges = iter(nums[:1] + sum(gaps, []) + nums[-1:])
         return list(zip(edges, edges))
 
+
+    def extract_signal_walking(self):
+        phases_adj=[]
+        turn_strides=[]
+        phases=[]
+        for line in self.treeview.get_children():
+            phases.append(self.treeview.item(line)['values'])
+        if (len(self.treeview_res.get_children())!=0):
+            self.treeview_res.delete(*self.treeview_res.get_children())
+        if (len(self.treeview_stat.get_children())!=0):
+            self.treeview_stat.delete(*self.treeview_stat.get_children())
+        for (x,start,stop,z) in phases:
+            start=int(start)
+            stop=int(stop)
+            z=int(z)
+            phases_adj.append((start,stop))
+            turn_strides.append(z)
+        accc,gyroo=self.CP_data_phone.crop_medipole(fs=1,phases=phases_adj,turn_time=0)
+        
+        return(accc,gyroo)
         
     def Detect_steps(self,event=None):
         phases_adj=[]
@@ -587,7 +631,7 @@ class MyApplication:
         phases=[]
         tot_peaks=[]
         result_adj=[]
-        
+        n_phases=0
         for line in self.treeview.get_children():
             phases.append(self.treeview.item(line)['values'])
         
@@ -607,9 +651,9 @@ class MyApplication:
             
 
         accc,gyroo=self.CP_data_phone.crop_medipole(fs=1,phases=phases_adj,turn_time=0)
-    
         
-        df = pd.concat(accc,ignore_index=True)
+
+        # df = pd.concat(accc,ignore_index=True)
         # plt.figure()
         # plt.plot(df)
         cum_ind=0     
@@ -658,25 +702,25 @@ class MyApplication:
 
             if (len(peaks)>5):
                 print(len(peaks))
-
                 tot_peaks.append(peaks)
                 self.CP_data_phone.computeVarStride(fs=100,remove_outliers=True,N=3,use_smartstep=True,manual_peaks=peaks,use_peaks=True,
                                               pocket=False,remove_step=turn_strides[i])
             
-                result=self.CP_data_phone.cycle_temp
                 try:
                     if len(self.CP_data_phone.cycle_temp['stridetime'])>5:
-                        result_adj.append(self.CP_data_phone.cycle_temp["detailed_stridetime"])
+                        n_phases=n_phases+1
+                        result_adj_phase=np.c_[ np.zeros(len(self.CP_data_phone.cycle_temp["detailed_stridetime"]))+i, 
+                                               self.CP_data_phone.cycle_temp["detailed_stridetime"] ] 
                         
-                        for d in result_adj:
-                            self.treeview_res.insert('', tk.END, values=d)
-                            
-                        
+                        result_adj.append(result_adj_phase)
+
+                        for d in result_adj_phase:
+                            self.treeview_res.insert('', tk.END, values=(int(d[0]),int(d[1]),int(d[2]),d[3]))
                          
                         d=((i,np.around(np.mean(self.CP_data_phone.cycle_temp['stridetime']),decimals=3),
                             self.CP_data_phone.cycle_temp['stridetime_std'],
                             self.CP_data_phone.cycle_temp['stridetime_Cov'],
-                            len(result["stridetime"]))) 
+                            len(self.CP_data_phone.cycle_temp['stridetime']),len(accc[i])/100)) 
                         
                         self.treeview_stat.insert('',tk.END,values=d)
                 except Exception as e:
@@ -688,37 +732,211 @@ class MyApplication:
             
         self.tot_peaks=np.hstack(tot_peaks)
         result_adj=np.vstack(result_adj)
-        print(self.treeview_stat.get_children())
+
         exported_list=[]
-        
         for line in self.treeview_stat.get_children():
             exported_list.append(self.treeview_stat.item(line)['values'])
             
-        self.exported_results_summary_phone=pd.DataFrame(exported_list, columns=["Phase", "Mean stride duration", "standard deviation of stride duration","Coefficient of variance of stride duration", "Number of strides"])
+        self.exported_results_summary_phone=pd.DataFrame(exported_list, columns=["Phase", "Mean stride duration", "standard deviation of stride duration","Coefficient of variance of stride duration", "Number of strides","Duration"])
         
-        # print(self.exported_results)
-        
-        # exported_list=[]
-        
-        # for line in self.treeview_res.get_children():
-        #     exported_list.append(self.treeview_res.item(line)['values'])
             
-        # print(exported_list)
-            
-        self.exported_results_phone=pd.DataFrame(result_adj, columns=["Start Heel strike foot","Start Heel strike foot", "stride duration"])
+        self.exported_results_phone=pd.DataFrame(result_adj, columns=["Phase","Start Heel strike foot",
+                                                                      "Stop Heel strike foot",
+                                                                      "stride duration"])
         
-        # print(self.exported_results)
-        
-        self.exported_results_phone['stride duration']=pd.to_numeric(self.exported_results_phone['stride duration'], downcast='float')
-        
+        self.lbl_mean_stridetime.configure(text ='%.2f seconds'%(np.round(np.mean(self.exported_results_phone['stride duration'].values),decimals=5)))
         self.lbl_SDstride.configure(text ='%.2f milliseconds'%(np.round(np.std(self.exported_results_phone['stride duration'].values),decimals=5)*1000))
         self.lbl_CVstride.configure(text ='%.2f %%'%(np.round(np.std(self.exported_results_phone['stride duration'].values)/np.mean(self.exported_results_phone['stride duration'].values),decimals=5)*100))
         self.lbl_Nstride.configure(text ='%d'%(len(self.exported_results_phone['stride duration'].values)))
-        self.lbl_Nphase.configure(text ='%d'%(len(self.exported_results_phone)))
+        self.lbl_Nphase.configure(text ='%d'%(n_phases))
         
+        if self.right_excel or self.left_excel:
+            self.Calculate_metrics(position="waist")
+            phone_steps=self.True_positives_phases_waist.iloc[:,2]
+            gaitup_steps=self.True_positives_phases_waist.iloc[:,1]
+            
+            self.CP_data_phone.computeVarStride(fs=100,remove_outliers=False,N=3,use_smartstep=True,manual_peaks=phone_steps,use_peaks=True,
+                                              pocket=False,remove_step=0)
+            
+            self.phone_strides=pd.DataFrame(self.CP_data_phone.cycle_temp["detailed_stridetime"],columns=["Heel_strike","Foot_off","Stride_time"])
+            
+
+            self.CP_data_phone.computeVarStride(fs=100,remove_outliers=False,N=3,use_smartstep=True,manual_peaks=gaitup_steps,use_peaks=True,
+                                              pocket=False,remove_step=0)
+            
+            self.gaitup_strides=pd.DataFrame(self.CP_data_phone.cycle_temp["detailed_stridetime"],columns=["Heel_strike","Foot_off","Stride_time"])
+
+            phone_index_todrop=self.phone_strides[(self.phone_strides.Stride_time > 3) | (self.phone_strides.Stride_time < 0) ].index
+            
+            self.phone_strides=self.phone_strides.drop(phone_index_todrop)
+        
+            self.gaitup_strides=self.gaitup_strides.drop(phone_index_todrop)
+    
+            gaitup_index_todrop=self.gaitup_strides[(self.gaitup_strides.Stride_time > 3) | (self.gaitup_strides.Stride_time < 0) ].index
+    
+            self.gaitup_strides=self.gaitup_strides.drop(gaitup_index_todrop)
+            
+            self.phone_strides=self.phone_strides.drop(gaitup_index_todrop)
+
+            
+
+
+
+
         self.plot_stridetime()
         
-               
+    
+    
+    def Calculate_metrics(self,event=None,position="waist"):
+        
+        if position=="waist":
+            i=0
+            confusion_metrixs_phases=[]
+            True_positives=[]
+            Missdetected=[]
+            for phase in self.exported_results_summary_phone["Phase"].values:
+                
+                index_phase=np.where(self.exported_results_phone["Phase"]==phase)[0].astype("int")
+                
+                
+                steps_phone=np.concatenate((self.exported_results_phone["Start Heel strike foot"].values[index_phase],
+                                           self.exported_results_phone["Stop Heel strike foot"].values[index_phase]))
+                steps_phone.sort()
+                steps_phone=np.unique(steps_phone)
+                
+                print(len(steps_phone))
+    
+                index_phase=np.where(self.exported_results_feet["Phase"]==phase)[0].astype("int")
+                
+                steps_gaitup=np.concatenate((self.exported_results_feet["Start Heel strike foot"].values[index_phase],
+                                           self.exported_results_feet["Stop Heel strike foot"].values[index_phase]))
+                
+                steps_gaitup.sort()
+                steps_gaitup=np.unique(steps_gaitup)
+        
+                
+                confusion_matrix,TP,MD=self.CP_data_phone.calculate_metrics(all_steps=steps_gaitup,steps=steps_phone,len_gyro_feautres=int(float(self.exported_results_summary_phone["Duration"][i])*100))
+                i=i+1
+                TP=np.vstack(TP)
+                TP=np.c_[np.zeros((len(TP),1)),TP]
+                True_positives.append(TP)
+                Missdetected.append(MD)
+                confusion_metrixs_phases.append(confusion_matrix)
+                
+            confusion_metrixs_phases=np.vstack(confusion_metrixs_phases)
+            True_positives_phases=np.vstack(True_positives)
+            Missdetected_phases=np.transpose(np.hstack(Missdetected))
+        
+            self.confusion_matrixs=pd.DataFrame(confusion_metrixs_phases,columns=["Truenegative","Falsepostive",
+                                                                              "Falsenegative","Truepositive"])
+            
+            start_true=[]
+            stop_true=[]
+            for i in range(0,len(True_positives_phases)):
+                start_true.append(np.where(self.exported_results_phone["Start Heel strike foot"].values.astype('int')==int(True_positives_phases[i,1]))[0])
+                stop_true.append(np.where(self.exported_results_phone["Stop Heel strike foot"].values.astype('int')==int(True_positives_phases[i,1]))[0])
+                print(len(start_true))
+                print(len(stop_true))
+                if len(start_true)!=len(stop_true):
+                    print("attention the highlighting not working properly")
+                
+            start_miss=[]
+            stop_miss=[]
+            for i in range(0,len(Missdetected_phases)):
+                start_miss.append(np.where(self.exported_results_feet["Start Heel strike foot"].values==Missdetected_phases[i])[0])
+                stop_miss.append(np.where(self.exported_results_feet["Stop Heel strike foot"].values==Missdetected_phases[i])[0])
+                if len(start_miss)!=len(stop_miss):
+                    print("attention the highlighting not working properly")   
+            
+            start_true=np.hstack(start_true)
+            start_miss=np.hstack(start_miss)
+            
+            stop_true=np.hstack(stop_true)
+            stop_miss=np.hstack(stop_miss)
+            
+            self.start=[start_true,start_miss]
+            self.stop=[stop_true,stop_miss]
+            
+            self.True_positives_phases_waist=pd.DataFrame(True_positives_phases)
+
+        if position=="hand":
+            
+            if self.hand:
+                print("calculating metrics for the hand")
+                i=0
+                confusion_metrixs_phases=[]
+                True_positives=[]
+                Missdetected=[]
+                
+                for phase in self.exported_results_summary_hand["Phase"].values:
+                    
+                    index_phase=np.where(self.exported_results_hand["Phase"]==phase)[0].astype("int")
+                    
+                    steps_hand=np.concatenate((self.exported_results_hand["Start Heel strike foot"].values[index_phase],
+                                           self.exported_results_hand["Stop Heel strike foot"].values[index_phase]))
+                    steps_hand.sort()
+                    steps_hand=np.unique(steps_hand)
+                    
+                    print(len(steps_hand))
+                    
+                    index_phase=np.where(self.exported_results_feet["Phase"]==phase)[0].astype("int")
+                    
+                    steps_gaitup=np.concatenate((self.exported_results_feet["Start Heel strike foot"].values[index_phase],
+                                               self.exported_results_feet["Stop Heel strike foot"].values[index_phase]))
+                    
+                    steps_gaitup.sort()
+                    steps_gaitup=np.unique(steps_gaitup)
+                    
+                    confusion_matrix,TP,MD=self.CP_data_h.calculate_metrics(all_steps=steps_gaitup,steps=steps_hand,len_gyro_feautres=int(float(self.exported_results_summary_hand["Duration"][i])*100))
+                    i=i+1
+                    
+                    TP=np.vstack(TP)
+                    TP=np.c_[np.zeros((len(TP),1)),TP]
+                    True_positives.append(TP)
+                    Missdetected.append(MD)
+                    confusion_metrixs_phases.append(confusion_matrix)
+                    
+                    
+                confusion_metrixs_phases=np.vstack(confusion_metrixs_phases)
+                True_positives_phases=np.vstack(True_positives)
+                Missdetected_phases=np.transpose(np.hstack(Missdetected))
+            
+                self.confusion_matrixs_hand=pd.DataFrame(confusion_metrixs_phases,columns=["Truenegative","Falsepostive",
+                                                                                  "Falsenegative","Truepositive"])
+                
+                start_true=[]
+                stop_true=[]
+                for i in range(0,len(True_positives_phases)):
+                    start_true.append(np.where(self.exported_results_hand["Start Heel strike foot"].values.astype('int')==int(True_positives_phases[i,1]))[0])
+                    stop_true.append(np.where(self.exported_results_hand["Stop Heel strike foot"].values.astype('int')==int(True_positives_phases[i,1]))[0])
+                    print(len(start_true))
+                    print(len(stop_true))
+                    if len(start_true)!=len(stop_true):
+                        print("attention the highlighting not working properly")
+                    
+                start_miss=[]
+                stop_miss=[]
+                for i in range(0,len(Missdetected_phases)):
+                    start_miss.append(np.where(self.exported_results_feet["Start Heel strike foot"].values==Missdetected_phases[i])[0])
+                    stop_miss.append(np.where(self.exported_results_feet["Stop Heel strike foot"].values==Missdetected_phases[i])[0])
+                    if len(start_miss)!=len(stop_miss):
+                        print("attention the highlighting not working properly")   
+                
+                start_true=np.hstack(start_true)
+                start_miss=np.hstack(start_miss)
+                
+                stop_true=np.hstack(stop_true)
+                stop_miss=np.hstack(stop_miss)
+                
+                self.start_hand=[start_true,start_miss]
+                self.stop_hand=[stop_true,stop_miss]
+                
+                
+                
+                self.True_positives_phases_hand=pd.DataFrame(True_positives_phases)
+            
+        
+
     def plot_and_calculate_start(self,event=None):
         print("doing")
         
@@ -932,8 +1150,6 @@ class MyApplication:
         
 
     def plot_gaitup_phone(self):
-        print("not done")
-        
         self.figure1 = Figure(figsize=(4, 3), dpi=100)
         self.canvas1 = FigureCanvasTkAgg(self.figure1, master=self.fcontainer_gaituphand)
         self.canvas1.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
@@ -941,6 +1157,7 @@ class MyApplication:
         self.toolbar.update()
         self.canvas1._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         color = 'tab:blue'
+        
         if self.hand:
             b = self.figure1.add_subplot(111)
             b.plot(self.acc_h_magnitude,zorder=1)
@@ -1163,12 +1380,36 @@ class MyApplication:
 
         
     def crop_signals(self,event=None,end="shortest"):
+        
         s_h=int((self.ent_str_gaitup_hand.get()))
         s_w=int((self.ent_str_phone_waist.get()))
         s_f=int((self.ent_str_gaitup_feet.get()))
         stop_phone=int((self.ent_stp_walk.get()))-s_w
         
+        try:
+            f = open(self.path+"\\synch.txt", "r")
+            n=f.readline().split(",")
+            print(n)
+            if n[0]!='':
+                s_f=int(n[0])
+                self.ent_str_gaitup_feet.delete(0,tk.END)
+                self.ent_str_gaitup_feet.insert(0,s_f)
+                
+            if n[1]!='':
+                s_h=int(n[1])    
+                self.ent_str_gaitup_hand.delete(0,tk.END)
+                self.ent_str_gaitup_hand.insert(0,s_h)
+            if n[2]!='':
+                s_w=int(n[2])
+                self.ent_str_phone_waist.delete(0,tk.END)
+                self.ent_str_phone_waist.insert(0,s_w)
+                stop_phone=int((self.ent_stp_walk.get()))-s_w
+            print("start and stop taken from text file")
+        except:
+            print("text file of synch doesnt exist")
         
+
+
         stop_ind_feet=stop_phone
         print(s_h)
         
@@ -1186,14 +1427,16 @@ class MyApplication:
         if self.right_excel:
             self.HS_r_index=self.HS_r_index-s_f
             stop_ind_feet=self.HS_r_index[-1]
+            self.e_g=stop_ind_feet
             
         if self.left_excel:
             self.HS_l_index=self.HS_l_index-s_f
             stop_ind_feet=self.HS_l_index[-1]
+            self.e_g=stop_ind_feet
             
         if self.left_excel and self.right_excel:
             stop_ind_feet=np.maximum(self.HS_l_index[-1],self.HS_r_index[-1])+1
-            
+            self.e_g=stop_ind_feet
 
             
         self.CP_data_phone.manual_crop(ind_start=s_w)
@@ -1201,13 +1444,14 @@ class MyApplication:
             print("hand is available")
             self.CP_data_h.manual_crop(ind_start=s_h)
             
-        
+        self.acquisition_stops=False
         if end=="shortest":
             print("shortest")
             print(stop_ind_feet)
             if self.left_excel or self.right_excel:
                 if stop_phone<stop_ind_feet-1000:
                     print("the phone stops acquisition before end of trial")
+                    self.acquisition_stops=True
                 stop_ind_feet=np.minimum(stop_phone,stop_ind_feet)
                 print(stop_ind_feet)
                 
@@ -1243,16 +1487,14 @@ class MyApplication:
         
         if self.hand:
             self.CP_data_h.filter_data(acc=self.CP_data_h.acc_interp,
-                                       gyro=self.CP_data_h.gyro_interp,
-                                       N=10,fc=2,fs=100)
+                                       gyro=self.CP_data_h.gyro_interp)
             self.CP_data_h.calculate_norm_accandgyro(gyro=self.CP_data_h.gyro_filtered,
                                                      acc=self.CP_data_h.acc_filtered)
             self.acc_h_magnitude=self.CP_data_h.acc_magnitude
             self.gyro_h_magnitude=self.CP_data_h.gyro_magnitude
 
         self.CP_data_phone.filter_data(acc=self.CP_data_phone.acc_interp,
-                                       gyro=self.CP_data_phone.gyro_interp,
-                                       N=10,fc=3,fs=100)
+                                       gyro=self.CP_data_phone.gyro_interp)
         self.CP_data_phone.calculate_norm_accandgyro(gyro=self.CP_data_phone.gyro_filtered,
                                                      acc=self.CP_data_phone.acc_filtered)
         self.acc_w_magnitude=self.CP_data_phone.acc_magnitude
@@ -1297,6 +1539,7 @@ class MyApplication:
         
     def calculate_gaitup_foot(self):
         print("calculating gaitup feet")
+        result_adj=[]
         
         if self.right_excel or self.left_excel:
         
@@ -1309,11 +1552,14 @@ class MyApplication:
             stop_walk=np.array([*stop_walk, len(self.acc_rf_magnitude)])
             start_walk=np.array([0, *start_walk])
             n_phases=0
-            stride_times=[]
+            
             for i in range(0,len(stop_walk)):
+                
                 if self.left_excel:
                     steps_left_phase=self.HS_l_index[np.where((self.HS_l_index<stop_walk[i]) & (self.HS_l_index>start_walk[i]))[0]]
                     steps_all=steps_left_phase
+                    
+                    
                 if self.right_excel:
                     steps_right_phase=self.HS_r_index[np.where((self.HS_r_index<stop_walk[i]) & (self.HS_r_index>start_walk[i]))[0]]
                     steps_all=steps_right_phase
@@ -1330,82 +1576,62 @@ class MyApplication:
                         self.CP_data_lf.computeVarStride(fs=100,remove_outliers=True,N=3,use_smartstep=True,manual_peaks=steps_all,use_peaks=True,pocket=False,remove_step=0)
                     else:
                         print("using 1 excel  file")
+                        # here pocket is true
                         self.CP_data_lf.computeVarStride(fs=100,remove_outliers=True,N=3,use_smartstep=True,manual_peaks=steps_all,use_peaks=True,pocket=True,remove_step=0)
-                    n_phases=n_phases+1
-                    
+
                     try:
-                        stride_times.append(self.CP_data_lf.cycle_temp['stridetime'])
-                    
+                        n_phases=n_phases+1
+                        result_adj_phase=np.c_[ np.zeros(len(self.CP_data_lf.cycle_temp["detailed_stridetime"]))+i, 
+                                               self.CP_data_lf.cycle_temp["detailed_stridetime"] ] 
                         
-                    
-        
-                    # fs=100
-                    # stride_time_r=np.diff(steps_right_phase)/fs
-                    # stride_time_l=np.diff(steps_left_phase)/fs
-                    
-                    # stride_time_r=np.array([i for i in stride_time_r if i > 0.8 and i < 1.5])
-                    # stride_time_l=np.array([i for i in stride_time_l if i > 0.8 and i < 1.5])
-                    # N=3
-                    # mean=np.mean(stride_time_r)
-                    # cut_off=N*np.std(stride_time_r)
-                    # lower, upper =  mean- cut_off, mean + cut_off
-                    # stride_time_r = np.array([i for i in stride_time_r if i > lower and i < upper])
-                    
-                    # N=3
-                    # mean=np.mean(stride_time_l)
-                    # cut_off=N*np.std(stride_time_l)
-                    # lower, upper =  mean- cut_off, mean + cut_off
-                    # stride_time_l = np.array([i for i in stride_time_l if i > lower and i < upper])
-                    
-                    # numberofstrides=len(stride_time_r)+len(stride_time_l)
-                    # MeanStridetime=np.mean([np.mean(stride_time_r),np.mean(stride_time_l)])
-                    # SDstridetime=np.maximum(np.around(np.std(stride_time_r),decimals=3),np.around(np.std(stride_time_l),decimals=3))
+                        result_adj.append(result_adj_phase)
                         
-                    # COV=np.around((SDstridetime*100)/MeanStridetime,decimals=3)
-                    
-                    #####
-                        d=((i,np.around(np.mean(self.CP_data_lf.cycle_temp['stridetime']),decimals=3),
-                            self.CP_data_lf.cycle_temp['stridetime_std'],
-                            self.CP_data_lf.cycle_temp['stridetime_Cov'],
-                            len(self.CP_data_lf.cycle_temp["stridetime"])))   
+                        # stride_times.append(self.CP_data_lf.cycle_temp['stridetime'])
+                        try:
+                            d=((i,np.around(np.mean(self.CP_data_lf.cycle_temp['stridetime']),decimals=3),
+                                self.CP_data_lf.cycle_temp['stridetime_std'],
+                                self.CP_data_lf.cycle_temp['stridetime_Cov'],
+                                len(self.CP_data_lf.cycle_temp["stridetime"]),
+                                (stop_walk[i]-start_walk[i])/100,(start_walk[i+1]-stop_walk[i])/100))
+                        except:
+                            d=((i,np.around(np.mean(self.CP_data_lf.cycle_temp['stridetime']),decimals=3),
+                                self.CP_data_lf.cycle_temp['stridetime_std'],
+                                self.CP_data_lf.cycle_temp['stridetime_Cov'],
+                                len(self.CP_data_lf.cycle_temp["stridetime"]),
+                                (stop_walk[i]-start_walk[i])/100,0))
+                            
+                        
                         self.treeview_stat_GU.insert('',tk.END,values=d)
-                    except Exception as e:
+                        
+                    except Exception:
                         print("stridetimes are filtered in this region so it will be omitted")
                     
                     
                 else:
                     print("no steps has occured in this period")
-              
-                
-            # steps_all=np.concatenate((self.HS_l_index,self.HS_r_index))
-            # steps_all.sort()
-                
-            # self.CP_data_lf.computeVarStride(fs=100,remove_outliers=True,N=3,use_smartstep=True,manual_peaks=steps_all,use_peaks=True,
-            #                                         pocket=False,remove_step=0)
-                
-            # result=self.CP_data_lf.cycle_temp
+                              
+            result_adj=np.vstack(result_adj)
             
-            if self.left_excel and self.right_excel:
-                stride_times=np.hstack(stride_times)
-            else:
-                stride_times=np.hstack(stride_times)
-            self.lbl_SDstride_GU.configure(text ='%.2f milliseconds'%(np.round(np.std(stride_times),decimals=5)*1000))
-            self.lbl_CVstride_GU.configure(text ='%.2f %%'%(np.round(np.std(stride_times)/np.mean(stride_times),decimals=5)*100))
-            self.lbl_Nstride_GU.configure(text ='%d'%(len(stride_times)))
+            exported_list_feet=[]
+            for line in self.treeview_stat_GU.get_children():
+                exported_list_feet.append(self.treeview_stat_GU.item(line)['values'])
+                
+            self.exported_results_summary_feet=pd.DataFrame(exported_list_feet, 
+                                                            columns=["Phase", "Mean stride duration", 
+                                                                     "standard deviation of stride duration",
+                                                                     "Coefficient of variance of stride duration",
+                                                                     "Number of strides","Duration","Turn time"])
+
+            self.exported_results_feet=pd.DataFrame(result_adj, columns=["Phase","Start Heel strike foot",
+                                                                      "Stop Heel strike foot",
+                                                                      "stride duration"])     
+            
+            self.lbl_mean_stridetime_GU.configure(text ='%.2f seconds'%(np.round(np.mean(result_adj[:,3]),decimals=5)))
+            self.lbl_SDstride_GU.configure(text ='%.2f milliseconds'%(np.round(np.std(result_adj[:,3]),decimals=5)*1000))
+            self.lbl_CVstride_GU.configure(text ='%.2f %%'%(np.round(np.std(result_adj[:,3])/np.mean(result_adj[:,3]),decimals=5)*100))
+            self.lbl_Nstride_GU.configure(text ='%d'%(len(result_adj[:,3])))
             self.lbl_Nphase_GU.configure(text ='%d'%(n_phases))
-                
-                # print("##feet##")
-                # print("the sd of stride duration is:")
-                # print(SDstridetime)
-                
-                # print("the number of strides is:")
-                # print(numberofstrides)
-                
-                # print("the cov of strides")
-                # print(COV)
-        
-            
-        
+
     def plot_steps_onalignedsignals(self,event=None):
 
         self.figure6 = Figure(figsize=(5, 4), dpi=100)
@@ -1419,8 +1645,6 @@ class MyApplication:
        
         b = self.figure6.add_subplot(311)
         
-        s_w=int((self.ent_str_phone_waist.get()))
-        str_walk=int(float(self.ent_str_walk.get()))*100
         
         d=self.tot_peaks
         print(d)
@@ -1476,45 +1700,48 @@ class MyApplication:
         
         
     def detect_steps_hand(self,event=None):
-        phases_adj=[]
-        turn_strides=[]
-        phases=[]
-        tot_peaks=[]
-        result_adj=[]
-        
-        
-        for line in self.treeview.get_children():
-            phases.append(self.treeview.item(line)['values'])
-        
-        if (len(self.treeview_stat_HP.get_children())!=0):
-            self.treeview_stat.delete(*self.treeview_HP.get_children())
-            
-        for (x,start,stop,z) in phases:
-            start=int(start)
-            stop=int(stop)
-            z=int(z)
-            phases_adj.append((start,stop))
-            turn_strides.append(z)
-            
-
-        accc,gyroo=self.CP_data_h.crop_medipole(fs=1,phases=phases_adj,turn_time=0)
-
         if self.hand:
+            phases_adj=[]
+            turn_strides=[]
+            phases=[]
+            tot_peaks=[]
+            result_adj=[]
             
+            #delete values already present in hand result treeview
+            if (len(self.treeview_stat_HP.get_children())!=0):
+                self.treeview_stat.delete(*self.treeview_stat_HP.get_children())
+            
+            # get turns from treeview
+            for line in self.treeview.get_children():
+                phases.append(self.treeview.item(line)['values'])
+    
+            for (x,start,stop,z) in phases:
+                start=int(start)
+                stop=int(stop)
+                z=int(z)
+                phases_adj.append((start,stop))
+                turn_strides.append(z)
+                
+            #crop the signals
+            accc,gyroo=self.CP_data_h.crop_medipole(fs=1,phases=phases_adj,turn_time=0)
+            n_phases=0
+            #step detection only works with smartstep
             for i in range(0,len(accc)):
                 self.CP_data_h.calculate_norm_accandgyro(acc=accc[i],gyro=gyroo[i])
                 
                 signals_unfiltered=[self.CP_data_h.acc_magnitude,
                                 self.CP_data_h.gyro_magnitude]
                 
-                self.CP_data_h.filter_data(acc=accc[i],gyro=gyroo[i],
-                                           N=10,fc=2,fs=100)
+                self.CP_data_h.filter_data(acc=accc[i],gyro=gyroo[i])
                 
                 self.CP_data_h.calculate_norm_accandgyro(gyro=self.CP_data_h.gyro_filtered,
                                                          acc=self.CP_data_h.acc_filtered)
                 
                 signals=[self.CP_data_h.acc_magnitude,self.CP_data_h.gyro_magnitude]
                 
+                # plt.figure()
+                # plt.plot(self.CP_data_h.acc_magnitude)
+                # plt.plot(self.CP_data_h.gyro_magnitude)
 
                 gyro_features,acc_features=self.CP_data_h.calculate_features(signals,
                                                                              signals_unfiltered)
@@ -1530,43 +1757,96 @@ class MyApplication:
                     cum_ind=phases_adj[i][0]
                     peaks=steps_smartstep+cum_ind
                     tot_peaks.append(peaks)
+
                     self.CP_data_h.computeVarStride(fs=100,remove_outliers=True,N=3,use_smartstep=True,manual_peaks=peaks,use_peaks=True,
                                               pocket=False,remove_step=turn_strides[i])
-            
-                    result=self.CP_data_h.cycle_temp
-                    
-                    
-                    for k in range(0,len(self.CP_data_h.cycle_temp['stridetime'])):
-                        result_adj.append((i,k+1,self.CP_data_h.cycle_temp['stridetime'][k][0]))
+
+                    try:
+                        if len(self.CP_data_h.cycle_temp['stridetime'])>5:
+                            n_phases=n_phases+1
+                            result_adj_phase=np.c_[ np.zeros(len(self.CP_data_h.cycle_temp["detailed_stridetime"]))+i, 
+                                                   self.CP_data_h.cycle_temp["detailed_stridetime"] ] 
+                            
+                            result_adj.append(result_adj_phase)
+                            
+                            
+                        d=((i,np.around(np.mean(self.CP_data_h.cycle_temp['stridetime']),decimals=3),
+                            self.CP_data_h.cycle_temp['stridetime_std'],
+                            self.CP_data_h.cycle_temp['stridetime_Cov'],
+                            len(self.CP_data_h.cycle_temp["stridetime"]),len(accc[i])/100)) 
                         
-                    # for d in result_adj:
-                    #     self.treeview_res.insert('', tk.END, values=d)
-                     
-                    d=((i,np.around(np.mean(self.CP_data_h.cycle_temp['stridetime']),decimals=3),
-                        self.CP_data_h.cycle_temp['stridetime_std'],
-                        self.CP_data_h.cycle_temp['stridetime_Cov'],
-                        len(result["stridetime"])))   
-                    self.treeview_stat_HP.insert('',tk.END,values=d)
+                        self.treeview_stat_HP.insert('',tk.END,values=d)
+                    
+                    except Exception as e:
+                        print (repr(e))
+                        print("no calculation of stride time for this segment")
+                    
                 else:
                     print("very few steps were recorded by smartstep")
                    
+                    
+                   
                 
-        self.tot_peaks=np.hstack(tot_peaks)
-        result_adj=np.vstack(result_adj)
-        
-                
-        self.lbl_SDstride_HP.configure(text ='%.2f milliseconds'%(np.round(np.std(result_adj[:,2]),decimals=5)*1000))
-        self.lbl_CVstride_HP.configure(text ='%.2f %%'%(np.round(np.std(result_adj[:,2])/np.mean(result_adj[:,2]),decimals=5)*100))
-        self.lbl_Nstride_HP.configure(text ='%d'%(len(result_adj[:,2])))
-        self.lbl_Nphase_HP.configure(text ='%d'%(len(accc)))
-                
-                
-                
-                
-
+            self.tot_peaks=np.hstack(tot_peaks)
+            result_adj=np.vstack(result_adj)
+            # add phase 
+             
             
-  
+            exported_list_hand=[]
+            for line in self.treeview_stat_HP.get_children():
+                exported_list_hand.append(self.treeview_stat_HP.item(line)['values'])
+                
+            self.exported_results_summary_hand=pd.DataFrame(exported_list_hand, 
+                                                            columns=["Phase", "Mean stride duration", 
+                                                                     "standard deviation of stride duration",
+                                                                     "Coefficient of variance of stride duration",
+                                                                     "Number of strides","Duration"])
+            
+            
         
+            self.exported_results_hand=pd.DataFrame(result_adj, columns=["Phase","Start Heel strike foot",
+                                                                      "Stop Heel strike foot",
+                                                                      "stride duration"])     
+            
+            
+            
+            self.lbl_mean_stridetime_HP.configure(text ='%.2f seconds'%(np.round(np.mean(result_adj[:,3]),decimals=5)))
+            self.lbl_SDstride_HP.configure(text ='%.2f milliseconds'%(np.round(np.std(result_adj[:,3]),decimals=5)*1000))
+            self.lbl_CVstride_HP.configure(text ='%.2f %%'%(np.round(np.std(result_adj[:,3])/np.mean(result_adj[:,3]),decimals=5)*100))
+            self.lbl_Nstride_HP.configure(text ='%d'%(len(result_adj[:,3])))
+            self.lbl_Nphase_HP.configure(text ='%d'%(n_phases))
+            
+            if self.right_excel or self.left_excel:
+                self.Calculate_metrics(position="hand")
+                
+                hand_steps=self.True_positives_phases_hand.iloc[:,2]
+                gaitup_steps=self.True_positives_phases_hand.iloc[:,1]
+            
+                self.CP_data_h.computeVarStride(fs=100,remove_outliers=False,N=3,use_smartstep=True,manual_peaks=hand_steps,use_peaks=True,
+                                              pocket=False,remove_step=0)
+            
+                self.hand_strides=pd.DataFrame(self.CP_data_h.cycle_temp["detailed_stridetime"],columns=["Heel_strike","Foot_off","Stride_time"])
+
+                self.CP_data_h.computeVarStride(fs=100,remove_outliers=False,N=3,use_smartstep=True,manual_peaks=gaitup_steps,use_peaks=True,
+                                              pocket=False,remove_step=0)
+            
+                self.gaitup_hand_strides=pd.DataFrame(self.CP_data_h.cycle_temp["detailed_stridetime"],columns=["Heel_strike","Foot_off","Stride_time"])
+                
+                hand_index_todrop=self.hand_strides[(self.hand_strides.Stride_time > 3) | (self.hand_strides.Stride_time < 0) ].index
+                
+                self.hand_strides=self.hand_strides.drop(hand_index_todrop)
+            
+                self.gaitup_hand_strides=self.gaitup_hand_strides.drop(hand_index_todrop)
+        
+                gaitup_index_todrop=self.gaitup_hand_strides[(self.gaitup_hand_strides.Stride_time > 3) | (self.gaitup_hand_strides.Stride_time < 0) ].index
+        
+                self.gaitup_hand_strides=self.gaitup_hand_strides.drop(gaitup_index_todrop)
+                
+                self.hand_strides=self.hand_strides.drop(gaitup_index_todrop)
+
+                
+                
+                
     def plot_graph(self,event=None,plot_name=""):
         try: 
             self.canvas.get_tk_widget().pack_forget()
@@ -1611,12 +1891,7 @@ class MyApplication:
         
         
         self.canvas.draw()
-
-            
-        
-            
-        
-            
+ 
             
     def calculate_norm_accandgyro(self,gyro=[0],acc=[0]):
         
@@ -1642,10 +1917,293 @@ class MyApplication:
     
 
     def Save_and_Export(self,event=None):
+
+        # self.hand=False
+        dfw1=self.exported_results_summary_phone
+        dfw2=self.exported_results_phone
         
-        self.exported_results.to_csv(self.export_path+"\\_exported_results.csv",index=False,header=True)
-        self.exported_results_res.to_csv(self.export_path+"\\_exported_stride_results.csv",index=False,header=True)
         
+        
+        phases=[]
+        for line in self.treeview.get_children():
+            phases.append(self.treeview.item(line)['values'])
+        
+        phases=np.vstack(phases)
+        
+        df_turns=pd.DataFrame(phases,columns=['Phase','Start','Stop','Steps_Turn'])
+        
+        
+        filename=self.export_path+"\\new_exported_results.xlsx"
+        writer = pd.ExcelWriter(filename, engine='xlsxwriter')
+        
+        dfw1.to_excel(writer, sheet_name='Summary of results', startrow=1,index=False)
+        
+        dfw2.to_excel(writer, sheet_name='Strides and Heel strikes', startrow=1,
+                      startcol=0,index=False)
+        
+        df_turns.to_excel(writer,sheet_name='Settings',
+                          startrow=5,startcol=1,index=False)
+        
+        
+        
+        
+        if self.right_excel or self.left_excel:
+            dff1=self.exported_results_summary_feet
+            dff1.to_excel(writer, sheet_name='Summary of results', startrow=len(dfw1)+4
+                          ,index=False)
+            dff2=self.exported_results_feet
+            
+            dff2.to_excel(writer, sheet_name='Strides and Heel strikes', startrow=1,
+                          startcol=6,index=False)
+            
+            self.confusion_matrixs.to_excel(writer, sheet_name='Summary of results', startrow=1,startcol=len(dfw1.columns)+4,index=False)
+        
+            self.phone_strides.to_excel(writer, sheet_name='True positives2', startrow=1,
+                          startcol=1,index=False)
+            
+            self.gaitup_strides.to_excel(writer, sheet_name='True positives2', startrow=1,
+                          startcol=6,index=False)
+            
+            if self.hand:
+                self.hand_strides.to_excel(writer, sheet_name='True positives2', startrow=1,
+                          startcol=12,index=False)
+                
+                self.gaitup_hand_strides.to_excel(writer, sheet_name='True positives2', startrow=1,
+                          startcol=18,index=False)
+            
+            
+            
+            
+        if self.hand:
+            dfh2=self.exported_results_hand
+            dfh1=self.exported_results_summary_hand
+            dfh1.to_excel(writer, sheet_name='Summary of results',
+                          startrow=len(dfw1)+4+len(dff1)+3,index=False)
+            
+            dfh2.to_excel(writer, sheet_name='Strides and Heel strikes', startrow=1,
+                          startcol=12,index=False)
+            
+            self.confusion_matrixs_hand.to_excel(writer, sheet_name='Summary of results', 
+                                                 startrow=1+len(dfw1)+4+len(dff1)+2,
+                                                 startcol=len(dfw1.columns)+4,index=False)
+            
+
+        worksheet1 = writer.sheets['Summary of results']
+        worksheet2 = writer.sheets['Strides and Heel strikes']
+        worksheet4=writer.sheets['True positives2']
+        workbook  = writer.book
+        
+        worksheet3=writer.sheets['Settings']
+        
+        merge_format = workbook.add_format({'bold': True, 'font_color': 'red'})
+        
+        Miss_detected_format = workbook.add_format({'bg_color':   '#FFC7CE'})
+        
+        Miss_detected_format_hand = workbook.add_format({'bg_color':   '#FF7F00'})
+        
+        True_detected_format = workbook.add_format({'bg_color':   '#C6EFCE'})
+        
+        ############# worksheet 1###########
+        worksheet1.merge_range(0,0,0,len(dfw1.columns)-1, 'Phone waist position', merge_format)
+        if self.right_excel or self.left_excel:
+            worksheet1.merge_range(0,len(dfw1.columns)+4,0,
+                                   len(dfw1.columns)+4+len(self.confusion_matrixs.columns)-1, 
+                                   'Confusion matrics step detection', merge_format)
+            for i in self.start[0]:
+                #(first_row, first_col, last_row, last_col)
+                worksheet2.conditional_format(i+2,1,i+2,1,{'type': 'text',
+                                           'criteria': 'containing',
+                                           'value': '',
+                                           'format': True_detected_format})
+    
+            for i in self.start[1]:
+                #(first_row, first_col, last_row, last_col)
+                worksheet2.conditional_format(i+2,7,i+2,7,{'type': 'text',
+                                           'criteria': 'containing',
+                                           'value': '',
+                                           'format': Miss_detected_format})
+                
+            for i in self.stop[0]:
+                #(first_row, first_col, last_row, last_col)
+                worksheet2.conditional_format(i+2,2,i+2,2,{'type': 'text',
+                                           'criteria': 'containing',
+                                           'value': '',
+                                           'format': True_detected_format})
+    
+            for i in self.stop[1]:
+                #(first_row, first_col, last_row, last_col)
+                worksheet2.conditional_format(i+2,8,i+2,8,{'type': 'text',
+                                           'criteria': 'containing',
+                                           'value': '',
+                                           'format': Miss_detected_format})
+                
+            worksheet4.write_string(1,23,'RMSE of stride time')
+            worksheet4.write_string(2,23,'Gaitup-phone mean stride time')
+            worksheet4.write_string(3,23,'phone mean stride time')
+            
+            worksheet4.write_string(6,23,'Gaitup-phone SD stride time')
+            worksheet4.write_string(7,23,'phone SD stride time')
+
+             
+            RMSE_pg=np.sqrt(np.mean((self.phone_strides["Stride_time"].values-self.gaitup_strides["Stride_time"].values)**2))*1000
+            ST_g=np.mean(self.gaitup_strides["Stride_time"].values)
+            ST_p=np.mean(self.phone_strides["Stride_time"].values)
+            
+            worksheet4.write_string(1,24,str(RMSE_pg))
+            worksheet4.write_string(2,24,str(ST_g))
+            worksheet4.write_string(3,24,str(ST_p))
+            
+
+            
+            ST_g=np.std(self.gaitup_strides["Stride_time"].values)*1000
+            ST_p=np.std(self.phone_strides["Stride_time"].values)*1000
+            
+            worksheet4.write_string(6,24,str(ST_g))
+            worksheet4.write_string(7,24,str(ST_p))
+            
+            
+            if self.hand:
+                worksheet4.write_string(4,23,'Gaitup-hand mean stride time')
+                worksheet4.write_string(5,23,'hand mean stride time')
+                worksheet4.write_string(8,23,'Gaitup-hand SD stride time')
+                worksheet4.write_string(9,23,'hand SD stride time')
+                worksheet4.write_string(10,23,'RMSE of stride time hand gaitup')
+                
+                ST_gh=np.mean(self.gaitup_hand_strides["Stride_time"].values)
+                ST_h=np.mean(self.hand_strides["Stride_time"].values)
+                
+                worksheet4.write_string(4,24,str(ST_gh))
+                worksheet4.write_string(5,24,str(ST_h))
+                
+                ST_gh=np.std(self.gaitup_hand_strides["Stride_time"].values)*1000
+                ST_h=np.std(self.hand_strides["Stride_time"].values)*1000
+                
+                worksheet4.write_string(8,24,str(ST_gh))
+                worksheet4.write_string(9,24,str(ST_h))
+            
+
+
+            
+                RMSE_hg=np.sqrt(np.mean((self.gaitup_hand_strides["Stride_time"].values-self.hand_strides["Stride_time"].values)**2))*1000
+    
+                worksheet4.write_string(10,24,str(RMSE_hg))
+           
+            
+        
+        
+        worksheet1.write_string(1,len(dfw1.columns)+1,'Mean Stride time')
+        worksheet1.write_string(1,len(dfw1.columns)+2,self.lbl_mean_stridetime.cget('text'))
+        
+        worksheet1.write_string(2,len(dfw1.columns)+1,'SD Stride time')
+        worksheet1.write_string(2,len(dfw1.columns)+2,self.lbl_SDstride.cget('text'))
+        
+        worksheet1.write_string(3,len(dfw1.columns)+1,'Number of strides')
+        worksheet1.write_string(3,len(dfw1.columns)+2,self.lbl_Nstride.cget('text'))
+        
+        worksheet1.write_string(4,len(dfw1.columns)+1,'Number of phases')
+        worksheet1.write_string(4,len(dfw1.columns)+2,self.lbl_Nphase.cget('text'))
+
+        ##############worksheet3 ########
+
+        worksheet3.write_string(1,1,'Start_analysis_phone')
+        worksheet3.write_string(1,2,self.ent_str_phone_waist.get())
+        
+        worksheet3.write_string(1,4,'Stop_analysis_phone')
+        worksheet3.write_string(1,5,str(self.e_w))
+
+        #######worksheet 2#########
+
+        worksheet2.merge_range(0,0,0,4, 'Phone waist position', merge_format)
+        
+        # print(len(self.start[0]))
+        # print(len(self.stop[0]))
+
+        if self.right_excel or self.left_excel:
+            
+            worksheet1.merge_range(len(dfw1)+3,0,len(dfw1)+3,len(dfw1.columns)-1, 'feet gaitup position', merge_format)
+
+            worksheet1.write_string(1+len(dfw1)+3,len(dfw1.columns)+1,'Mean Stride time')
+            worksheet1.write_string(1+len(dfw1)+3,len(dfw1.columns)+2,self.lbl_mean_stridetime_GU.cget('text'))
+        
+            worksheet1.write_string(2+len(dfw1)+3,len(dfw1.columns)+1,'SD Stride time')
+            worksheet1.write_string(2+len(dfw1)+3,len(dfw1.columns)+2,self.lbl_SDstride_GU.cget('text'))
+        
+            worksheet1.write_string(3+len(dfw1)+3,len(dfw1.columns)+1,'Number of strides')
+            worksheet1.write_string(3+len(dfw1)+3,len(dfw1.columns)+2,self.lbl_Nstride_GU.cget('text'))
+        
+            worksheet1.write_string(4+len(dfw1)+3,len(dfw1.columns)+1,'Number of phases')
+            worksheet1.write_string(4+len(dfw1)+3,len(dfw1.columns)+2,self.lbl_Nphase_GU.cget('text'))
+                        
+            ######
+            worksheet3.write_string(2,1,'Start_analysis_Gaitup')
+            worksheet3.write_string(2,2,self.ent_str_gaitup_feet.get())
+            
+            worksheet3.write_string(2,4,'Stop_analysis_Gaitup')
+            worksheet3.write_string(2,5,str(self.e_g))
+            ######
+            
+            worksheet2.merge_range(0,6,0,10, 'Feet Gaitup position', merge_format)
+            
+            if self.acquisition_stops:
+                worksheet3.write_string(2,7,'NOTE: Acquisition of phone stops before end of test')
+            
+        if self.hand:
+            worksheet1.merge_range(len(dfw1)+4+len(dff1)+2,
+                                   0,len(dfw1)+4+len(dff1)+2,
+                                   len(dfh1.columns)-1, 'Hand Gaitup position', merge_format)
+            
+            worksheet1.write_string(1+len(dfw1)+4+len(dff1)+2,len(dfw1.columns)+1,'Mean Stride time')
+            worksheet1.write_string(1+len(dfw1)+4+len(dff1)+2,len(dfw1.columns)+2,self.lbl_mean_stridetime_HP.cget('text'))
+            
+            worksheet1.write_string(2+len(dfw1)+4+len(dff1)+2,len(dfw1.columns)+1,'SD Stride time')
+            worksheet1.write_string(2+len(dfw1)+4+len(dff1)+2,len(dfw1.columns)+2,self.lbl_SDstride_HP.cget('text'))
+            
+            worksheet1.write_string(3+len(dfw1)+4+len(dff1)+2,len(dfw1.columns)+1,'Number of strides')
+            worksheet1.write_string(3+len(dfw1)+4+len(dff1)+2,len(dfw1.columns)+2,self.lbl_Nstride_HP.cget('text'))
+            
+            worksheet1.write_string(4+len(dfw1)+4+len(dff1)+2,len(dfw1.columns)+1,'Number of phases')
+            worksheet1.write_string(4+len(dfw1)+4+len(dff1)+2,len(dfw1.columns)+2,self.lbl_Nphase_HP.cget('text'))
+            
+            worksheet1.merge_range(len(dfw1)+4+len(dff1)+2,len(dfw1.columns)+4,
+                                   len(dfw1)+4+len(dff1)+2,
+                                   len(dfw1.columns)+4+len(self.confusion_matrixs_hand.columns)-1, 
+                                   'Confusion matrics step detection', merge_format)
+
+
+            worksheet3.write_string(3,1,'Start_analysis_Hand')
+            worksheet3.write_string(3,2,self.ent_str_gaitup_hand.get())
+            
+            worksheet2.merge_range(0,12,0,16, 'Hand Gaitup position', merge_format)
+            
+            for i in self.start_hand[0]:
+                #(first_row, first_col, last_row, last_col)
+                worksheet2.conditional_format(i+2,13,i+2,13,{'type': 'text',
+                                           'criteria': 'containing',
+                                           'value': '',
+                                           'format': True_detected_format})
+    
+            for i in self.start_hand[1]:
+                #(first_row, first_col, last_row, last_col)
+                worksheet2.conditional_format(i+2,7,i+2,7,{'type': 'text',
+                                           'criteria': 'containing',
+                                           'value': '',
+                                           'format': Miss_detected_format_hand})
+                
+            for i in self.stop_hand[0]:
+                #(first_row, first_col, last_row, last_col)
+                worksheet2.conditional_format(i+2,14,i+2,14,{'type': 'text',
+                                           'criteria': 'containing',
+                                           'value': '',
+                                           'format': True_detected_format})
+    
+            for i in self.stop_hand[1]:
+                #(first_row, first_col, last_row, last_col)
+                worksheet2.conditional_format(i+2,8,i+2,8,{'type': 'text',
+                                           'criteria': 'containing',
+                                           'value': '',
+                                           'format': Miss_detected_format_hand})
+            
+        writer.save()
         
         print("saved")
     
@@ -1688,6 +2246,99 @@ class MyApplication:
         self.b.axhline(y=np.mean(self.exported_results_phone['stride duration'])+np.std(self.exported_results_phone['stride duration']),linestyle='--',color='r',linewidth=0.5)
         self.b.text(0.8, 0.8,("Stride std:%s, Stride cov:%s"%(self.lbl_SDstride.cget("text"),self.lbl_CVstride.cget("text"))),size=10,transform=self.figure2.transFigure,ha="right", va="top", bbox=dict(facecolor='red', alpha=0.5))
         self.canvas2.draw()
+        
+        
+    def calculate_DFA(self,data):
+        """
+        """
+        strides_phone=[]
+        strides_phone2=[]
+        strides_gaitup=[]
+        strides_gaitup2=[]
+        strides_hand=[]
+        strides_hand2=[]
+        result_excel="_exported_results.xlsx"
+        result_excel=os.path.join(self.path,result_excel)
+        
+        wb_result= load_workbook(result_excel)
+        wb_result=wb_result["Strides and Heel strikes"]
+        
+        
+        strides_phone=wb_result['D']
+        strides_phone=strides_phone[2:]
+        
+        strides_phone2=[]
+        for cl in strides_phone:
+            if cl.value!=None:
+                strides_phone2.append(cl.value)
+            
+        strides_phone2=np.hstack(strides_phone2).astype('float64')
+        
+        
+        if self.right_excel or self.left_excel:          
+            strides_gaitup=wb_result['J']
+            strides_gaitup=strides_gaitup[2:]
+            
+            strides_gaitup2=[]
+            for cl in strides_gaitup:
+                if cl.value!=None:
+                    strides_gaitup2.append(cl.value)
+                
+            strides_gaitup2=np.hstack(strides_gaitup2).astype('float64')
+        
+        if self.hand:
+            strides_hand=wb_result['P']
+            strides_hand=strides_hand[2:]
+            
+            
+            strides_hand2=[]
+            for cl in strides_hand:
+                if cl.value!=None:
+                    strides_hand2.append(cl.value)
+                
+            strides_hand2=np.hstack(strides_hand2).astype('float64')
+        
+        #read excel file
+        data1=strides_phone2
+        
+        N=len(data1)
+        f=2**(1/8)
+        if N>1000:
+            nvals=nld.logarithmic_n(16, N//9,f)
+        else:
+            nvals=nld.logarithmic_n(4, N//4,f)
+            
+        xx,yy=nld.dfa(data1, nvals=nvals, overlap=False, order=1, fit_trend="poly",fit_exp="poly", debug_plot=True, debug_data=True, plot_file=None)
+        
+        self.lbl_DFA_phone.configure(text ='%.2f '%(xx))
+
+        if self.right_excel or self.left_excel:
+            data2=strides_gaitup2
+            
+            N=len(data2)
+            f=2**(1/8)
+            if N>1000:
+                nvals=nld.logarithmic_n(16, N//9,f)
+            else:
+                nvals=nld.logarithmic_n(4, N//4,f)
+                
+            xx,yy=nld.dfa(data2, nvals=nvals, overlap=False, order=1, fit_trend="poly",fit_exp="poly", debug_plot=True, debug_data=True, plot_file=None)
+                    
+            self.lbl_DFA_feet.configure(text ='%.2f '%(xx))
+
+        if self.hand:
+            data3=strides_hand2
+            
+            N=len(data3)
+            f=2**(1/8)
+            if N>1000:
+                nvals=nld.logarithmic_n(16, N//9,f)
+            else:
+                nvals=nld.logarithmic_n(4, N//4,f)
+                
+            xx,yy=nld.dfa(data3, nvals=nvals, overlap=False, order=1, fit_trend="poly",fit_exp="poly", debug_plot=True, debug_data=True, plot_file=None)
+    
+            self.lbl_hand.configure(text ='%.2f '%(xx))
 
 
     def Calculate_lyapunov(self, event=None,tao=0,dim=0,three_dim=True):
@@ -1798,23 +2449,48 @@ class MyApplication:
 
     def preprocessing_lyap(self,totalnumberofstride=150):
         self.preprocessed=True
-        #the signal when turns are removed
-        accc=self.CP_data.walkingperiodsacc
-        accc = pd.concat(accc,ignore_index=True)
-        gyroo=self.CP_data.walkingperiodsgyro
-        gyroo = pd.concat(gyroo,ignore_index=True)
+        
+        acc,gyro=self.extract_signal_walking()
+        
+        gyro = pd.concat(gyro,ignore_index=True)
+        acc = pd.concat(acc,ignore_index=True)
+        index_step=[]
+
+        result_excel="_exported_results.xlsx"
+        result_excel=os.path.join(self.path,result_excel)
+        wb_result= load_workbook(result_excel)
+        wb_result=wb_result["Strides and Heel strikes"]
+        
+        index_foot1=wb_result['B']
+        index_foot1=index_foot1[2:]
+        
+        # index_foot2=wb_result['C']
+        # index_foot2=index_foot2[2:]
+        
+        index_step=[]
+        for cl in index_foot1:
+            if cl.value!=None:
+                index_step.append(cl.value)
+            
+        index_step=np.hstack(index_step).astype('int')
         
         #calculating the norm of the signal when norms are removed and 
         #then normalising to a fixed number of strides and number of points
-        self.CP_data.calculate_norm_accandgyro(gyro=gyroo,acc=accc)
-        self.CP_data.normal_signal(threeD_acc=accc,threeD_gyro=gyroo,peaks=self.tot_peaks,remove_outliers=True,N=3,Numberofstrides=totalnumberofstride,plot=False)
+        self.CP_data_phone.calculate_norm_accandgyro(gyro=gyro,acc=acc)
         
+        
+        
+        self.CP_data_phone.normal_signal(threeD_acc=acc,threeD_gyro=gyro,
+                                         peaks=index_step,remove_outliers=False,N=3,
+                                         Numberofstrides=totalnumberofstride,plot=False)
+        
+        print("creating acc_data")
         # retrieving the normalised signals
-        self.acc_data=self.CP_data.norma_acc_strides
-        self.gyro_data=self.CP_data.norma_acc_strides
+        self.acc_data=self.CP_data_phone.norma_acc_strides
+        self.gyro_data=self.CP_data_phone.norma_acc_strides
         
-        self.threeD_acc_data=self.CP_data.norma_threeD_acc
-        self.threeD_gyro_data=self.CP_data.norma_threeD_gyro
+        self.threeD_acc_data=self.CP_data_phone.norma_threeD_acc
+        self.threeD_gyro_data=self.CP_data_phone.norma_threeD_gyro
         
     def Calculate_time_delay(self, event=None):
         
@@ -1842,6 +2518,185 @@ class MyApplication:
         plt.figure()
         plt.title("lag of z")
         plt.plot(lag)
+        
+    def calculate_entropy(self,event=None):
+        
+        print("calculating entropy")
+        #Do the same normalisation as for lyapunov
+        if self.preprocessed==False or self.lyap_NBstrides != int((self.ent_Nbstridelyap.get())):
+            self.lyap_NBstrides=int((self.ent_Nbstridelyap.get()))
+            self.preprocessing_lyap(totalnumberofstride=self.lyap_NBstrides)
+
+        r=float((self.ent_tolerance.get()))
+        m=int(self.ent_vect_length.get())
+        r=None
+        
+        print("calculating sample entropy x")
+        
+        se_x=nld.sampen(self.threeD_acc_data[self.threeD_acc_data.columns[0]], emb_dim=m, tolerance=r,
+                        debug_plot=False,
+                        debug_data=False, plot_file=None)
+        
+        self.lbl_se_x.configure(text ='%.2f '%(se_x))
+        
+        print(se_x)
+        
+        print("calculating sample entropy y")
+        
+        se_y=nld.sampen(self.threeD_acc_data[self.threeD_acc_data.columns[1]], emb_dim=m, tolerance=r,
+                        debug_plot=False,
+                        debug_data=False, plot_file=None)
+        
+        self.lbl_se_y.configure(text ='%.2f '%(se_y))
+        
+        print(se_y)
+        
+        print("calculating sample entropy z")
+        
+        se_z=nld.sampen(self.threeD_acc_data[self.threeD_acc_data.columns[2]], emb_dim=m, tolerance=r,
+                        debug_plot=False,
+                        debug_data=False, plot_file=None)
+        
+        self.lbl_se_z.configure(text ='%.2f '%(se_z))
+        
+        print(se_z)
+        
+        print("calculating sample entropy r")
+        
+        se_r=nld.sampen(self.acc_data, emb_dim=m, tolerance=r,
+                        debug_plot=False,
+                        debug_data=False, plot_file=None)
+        
+        self.lbl_se_r.configure(text ='%.2f '%(se_r))
+        
+        print(se_r)
+        
+        rgc=None
+        mgc=100
+        
+        print("calculating sample entropy gaitcycle x")
+        
+        se_x_gaitcycle=nld.sampen(self.threeD_acc_data[self.threeD_acc_data.columns[0]], 
+                                  emb_dim=mgc,emb_dim_plus_one=mgc+100, tolerance=rgc,
+                          debug_plot=False,
+                        debug_data=False, plot_file=None)
+        
+        self.lbl_se_gc_x.configure(text ='%.2f '%(se_x_gaitcycle))
+        
+        print(se_x_gaitcycle)
+        
+        print("calculating sample entropy gaitcycle y")
+        
+        se_y_gaitcycle=nld.sampen(self.threeD_acc_data[self.threeD_acc_data.columns[1]], 
+                                  emb_dim=mgc,emb_dim_plus_one=mgc+100, tolerance=rgc,
+                        debug_plot=True,
+                        debug_data=False, plot_file=None)
+        
+        self.lbl_se_gc_y.configure(text ='%.2f '%(se_y_gaitcycle))
+        
+        print(se_y_gaitcycle)
+        
+        print("calculating sample entropy gaitcycle z")
+        
+        se_z_gaitcycle=nld.sampen(self.threeD_acc_data[self.threeD_acc_data.columns[2]], 
+                                  emb_dim=mgc,emb_dim_plus_one=mgc+100, tolerance=rgc,
+                        debug_plot=False,
+                        debug_data=False, plot_file=None)
+        
+        self.lbl_se_gc_z.configure(text ='%.2f '%(se_z_gaitcycle))
+        
+        print(se_z_gaitcycle)
+        
+        print("calculating sample entropy gaitcycle r")
+        
+        se_r_gaitcycle=nld.sampen(self.acc_data, emb_dim=mgc,emb_dim_plus_one=mgc+100, tolerance=rgc,
+                        debug_plot=False,
+                        debug_data=False, plot_file=None)
+        
+        self.lbl_se_gc_r.configure(text ='%.2f '%(se_r_gaitcycle))
+        
+        print(se_r_gaitcycle)
+        
+        ##reading stride times from excel file
+        strides_phone=[]
+        strides_phone2=[]
+        strides_gaitup=[]
+        strides_gaitup2=[]
+        strides_hand=[]
+        strides_hand2=[]
+        result_excel="_exported_results.xlsx"
+        result_excel=os.path.join(self.path,result_excel)
+        
+        wb_result= load_workbook(result_excel)
+        wb_result=wb_result["Strides and Heel strikes"]
+        
+        
+        strides_phone=wb_result['D']
+        strides_phone=strides_phone[2:]
+        
+        strides_phone2=[]
+        for cl in strides_phone:
+            if cl.value!=None:
+                strides_phone2.append(cl.value)
+            
+        strides_phone2=np.hstack(strides_phone2).astype('float64')
+        
+        
+        if self.right_excel or self.left_excel:          
+            strides_gaitup=wb_result['J']
+            strides_gaitup=strides_gaitup[2:]
+            
+            strides_gaitup2=[]
+            for cl in strides_gaitup:
+                if cl.value!=None:
+                    strides_gaitup2.append(cl.value)
+                
+            strides_gaitup2=np.hstack(strides_gaitup2).astype('float64')
+        
+        if self.hand:
+            strides_hand=wb_result['P']
+            strides_hand=strides_hand[2:]
+            
+            
+            strides_hand2=[]
+            for cl in strides_hand:
+                if cl.value!=None:
+                    strides_hand2.append(cl.value)
+                
+            strides_hand2=np.hstack(strides_hand2).astype('float64')
+        
+        #read excel file
+        data1=strides_phone2
+        
+        se_stridetime_phone=nld.sampen(data1, emb_dim=m, tolerance=None,debug_plot=False,
+                        debug_data=False, plot_file=None)
+
+        self.lbl_se_stridetime.configure(text ='%.2f '%(se_stridetime_phone))
+
+        # if self.right_excel or self.left_excel:
+        #     data2=strides_gaitup2
+            
+
+        #     self.lbl_DFA_feet.configure(text ='%.2f '%(xx))
+
+        # if self.hand:
+        #     data3=strides_hand2
+            
+
+        #     self.lbl_hand.configure(text ='%.2f '%(xx))
+        
+        
+        
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
 
                 

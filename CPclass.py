@@ -431,8 +431,11 @@ class phone(object):
         :param int N: order of filter (default 4) 
         returns attributes acc_filtered and gyro_filtered
         """
-        Wn =fc/(fs/2) # Cutoff frequency normalized 
-        B, A = signal.butter(N, Wn,'low', output='ba') 
+        # Wn =fc/(fs/2) # Cutoff frequency normalized 
+        # B, A = signal.butter(N, Wn,'low', output='ba') 
+        
+        A = np.asarray([1, -8.99594505535417, 36.4633075498862, -87.6908102873418, 138.559912556039, -150.302116273606, 113.348650426591, -58.6790854259776, 19.9562604962225, -4.02604302102184, 0.365869040210561]);
+        B = np.asarray([5.51456216845228e-12, 5.51456216845228e-11, 2.48155297580353e-10, 6.61747460214274e-10, 1.15805805537498e-09, 1.38966966644997e-09, 1.15805805537498e-09, 6.61747460214274e-10, 2.48155297580353e-10, 5.51456216845228e-11, 5.51456216845228e-12]);
         
         if len(acc)!=1:
             y=acc.copy()
@@ -932,29 +935,40 @@ class phone(object):
             if remove_outliers:
                 stride_time_leading=np.array([i for i in stride_time_leading if i >= 0.8 and i <= 2])
                 stride_time_contralateral=np.array([i for i in stride_time_contralateral if i >= 0.8 and i <= 2])
-                #---stride time leading foot---
-                mean=np.mean(stride_time_leading)
-                cut_off=N*np.std(stride_time_leading)
-                lower, upper =  mean- cut_off, mean + cut_off
-                cycle_tempparam['stride_time_leading'] = np.array([i for i in stride_time_leading if i > lower and i < upper])
+                try:
+                    #---stride time leading foot---
+                    mean=np.mean(stride_time_leading)
+                    cut_off=N*np.std(stride_time_leading)
+                    lower, upper =  mean- cut_off, mean + cut_off
+                    cycle_tempparam['stride_time_leading'] = np.array([i for i in stride_time_leading if i > lower and i < upper])
+                except Exception as e:
+                    print("no stride time left")
+                    
                 #---stride time contralateral foot---
-                mean=np.mean(stride_time_contralateral)
-                cut_off=N*np.std(stride_time_contralateral)
-                lower, upper =  mean- cut_off, mean + cut_off
-                cycle_tempparam['stride_time_contralateral'] = np.array([i for i in stride_time_contralateral if i > lower and i < upper])
-                
+                try:
+                    mean=np.mean(stride_time_contralateral)
+                    cut_off=N*np.std(stride_time_contralateral)
+                    lower, upper =  mean- cut_off, mean + cut_off
+                    cycle_tempparam['stride_time_contralateral'] = np.array([i for i in stride_time_contralateral if i > lower and i < upper])
+                except Exception as e:
+                    print("no stride time left")
                 #---step time---
-                mean=np.mean(list_step_time[:,2])
-                cut_off=N*np.std(list_step_time[:,2])
-                lower, upper =  mean- cut_off, mean + cut_off
-                cycle_tempparam['steptime'] = np.array([i for i in list_step_time[:,2] if i > lower and i < upper])
-
-                list_stride_time=np.vstack([i for i in list_stride_time if i[2]>=0.8 and i[2]<=2])
-                mean=np.mean(list_stride_time[:,2])
-                cut_off=N*np.std(list_stride_time[:,2])
-                lower, upper =  mean- cut_off, mean + cut_off
-                list_stride_time=np.vstack([i for i in list_stride_time if i[2]>=lower and i[2]<=upper])
-
+                try:
+                    mean=np.mean(list_step_time[:,2])
+                    cut_off=N*np.std(list_step_time[:,2])
+                    lower, upper =  mean- cut_off, mean + cut_off
+                    cycle_tempparam['steptime'] = np.array([i for i in list_step_time[:,2] if i > lower and i < upper])
+                except Exception as e:
+                    print("no step time left")
+                    
+                try:
+                    list_stride_time=np.vstack([i for i in list_stride_time if i[2]>=0.8 and i[2]<=2])
+                    mean=np.mean(list_stride_time[:,2])
+                    cut_off=N*np.std(list_stride_time[:,2])
+                    lower, upper =  mean- cut_off, mean + cut_off
+                    list_stride_time=np.vstack([i for i in list_stride_time if i[2]>=lower and i[2]<=upper])
+                except:
+                    print("no step time left")
             else:
                 cycle_tempparam['stride_time_leading']=stride_time_leading
                 cycle_tempparam['stride_time_contralateral']=stride_time_contralateral
@@ -1979,7 +1993,7 @@ class phone(object):
         
     def predict_steps(self,gyro_features,acc_features):
 
-        feat_gyro=['gyro_indMax_win60',
+        feat_gyro_v3=['gyro_indMax_win60',
          'gyro_skew_win70',
          'gyro_max_freq_val',
          'gyro_SMA_win80',
@@ -1987,15 +2001,24 @@ class phone(object):
          'gyro_var_win20',
          'gyro_Max_win70',
          'gyro_valley_prominences80']
-    
+        
+        feat_gyro=['gyro_skew_win70', 'gyro_skew_win30', 'gyro_indMax_win60',
+       'gyro_SMA_win80', 'gyro_var_win20', 'gyro_Max_win70',
+       'gyro_valley_prominences80', 'gyro_max_freq_val']
+
         feat_acc=['acc_indMin_win30', 'acc_skew_win5', 'acc_Median_win80',
+       'acc_peak_prominences80', 'acc_peak_prominences50',
+       'acc_valley_prominences80', 'acc_domfreq1', 'acc_kurt_win30']
+    
+        feat_acc_v3=['acc_indMin_win30', 'acc_skew_win5', 'acc_Median_win80',
                 'acc_kurt_win30',
                'acc_valley_prominences80', 'acc_peak_prominences80',
                'acc_peak_prominences50',  'acc_domfreq1']
     
-        joblib_file = "d:\\Users\\al-abiad\\Desktop\\experiments\\treadmill\\machine_learning_features\\joblib_Model_accv3.pkl" 
+        
+        joblib_file = "d:\\Users\\al-abiad\\Desktop\\experiments\\treadmill\\machine_learning_features\\joblib_Model_accv4.pkl" 
         Model_acc = joblib.load(joblib_file)
-        joblib_file = "d:\\Users\\al-abiad\\Desktop\\experiments\\treadmill\\machine_learning_features\\joblib_Model_gyrov3.pkl" 
+        joblib_file = "d:\\Users\\al-abiad\\Desktop\\experiments\\treadmill\\machine_learning_features\\joblib_Model_gyrov4.pkl" 
         Model_gyro = joblib.load(joblib_file)
         steps_in_window=[]
         maxprobacc=0.5
@@ -2022,11 +2045,9 @@ class phone(object):
             if (y_predprobgyro[0][1]>maxprobgyro):
                 steps_in_window.append(1)
                 step_type.append("gyro")
-                print("Model is gyro")
                 index=index+1
                 distance=0
                 while distance<80 and index<len(gyro_features):
-                    print("entered loop")
                     featgyro=gyro_features.iloc[index,:][feat_gyro]
                     y_predprobgyro= Model_gyro.predict_proba([featgyro])
     
@@ -2041,7 +2062,6 @@ class phone(object):
                     index=index+1
     
                 if index<len(gyro_features):
-                    print("we entered condition")
                     index=index-50
                     steps_in_window=steps_in_window[:-50]
     
@@ -2049,14 +2069,13 @@ class phone(object):
             elif (y_predprobacc[0][1]>maxprobacc):
                 steps_in_window.append(1)
                 step_type.append("acc")
-                print("Model is acc")
                 index=index+1
                 distance=0
-                print(index)
+
                 while distance<80 and index<len(gyro_features):
                     featacc=acc_features.iloc[index,:][feat_acc]
                     y_predprobacc= Model_acc.predict_proba([featacc])
-                    print(index)
+                    
                     if(y_predprobacc[0][1]>maxprobacc):
                         print("step is acc")
                         steps_in_window.append(1)
@@ -2068,14 +2087,12 @@ class phone(object):
                     index=index+1
     
                 if index<len(gyro_features):
-                    print("we entered condition")
                     index=index-50
                     steps_in_window=steps_in_window[:-50]
     
     
             else:
                 steps_in_window.append(0)
-                print("irregular or static")
                 index=index+1
                 
         return(steps_in_window,step_type)
@@ -2089,6 +2106,65 @@ class phone(object):
                 steps.append(64+ii)
             ii=ii+1
         return steps
+    
+    def calculate_metrics(self,all_steps,steps,len_gyro_feautres):
+        #steps zupt 
+        tread=all_steps #true 
+        iss=0
+    #     steps=steps_smartstep_Lphone #smartstep
+        fillsteps=[]
+    
+        k=0
+        #steps ==model
+        for s in steps:
+    
+            if len(tread)>0:
+                idx = (np.abs(tread - s)).argmin()
+    
+                if tread[idx-1]<s and tread[idx-1]>s-60 and idx!=0:
+                    idx=idx-1
+    
+                closest_step=np.abs(tread[idx] - s)
+    
+    
+    
+                if closest_step>60:
+                #         print(tread[idx])
+                    iss=iss+1
+    
+                else:
+                    fillsteps.append([tread[idx],s])
+                    tread=np.delete(tread, idx)
+                #         fillsteps2.append(s)
+            k=k+1
+    
+    
+        print("misdetected steps")
+        misdetected_steps=len(tread)
+        print(misdetected_steps)
+        print("overdetected steps")
+        overdetected_steps= len(steps)-len(fillsteps)
+        print(overdetected_steps)
+        print(tread)
+        print("the number of total steps zupt %d"%len(all_steps))
+        print("the number of total steps smart %d"%len(steps))
+        
+        print("the number of nonsteps %d"%(len_gyro_feautres-len(all_steps)))
+        
+        Falsenegative=len(tread)
+        Falsepostive=overdetected_steps
+        
+        Truenegative=len_gyro_feautres-len(steps)
+        Truepositive=len(fillsteps)
+    
+        
+        confusion_matrix=[Truenegative,Falsepostive,Falsenegative,Truepositive]
+        
+        if len(fillsteps)==0:
+            fillsteps.append([0,0])
+        
+        
+        return(confusion_matrix,fillsteps,tread)
     
 
         
